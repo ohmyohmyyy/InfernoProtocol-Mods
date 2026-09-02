@@ -4,7 +4,7 @@ Two independent quality-of-life mods for [Inferno Protocol on Steam](https://sto
 
 | Mod | Version | What it changes |
 | --- | --- | --- |
-| BetterUI | 0.9.2 | Rebuilds and polishes only the crafting-table interface. |
+| BetterUI | 0.9.3 | Rebuilds and polishes only the crafting-table interface. |
 | Utility Wheel | 0.2.0 | Adds a translucent controller radial menu for occupied hotbar slots. |
 
 The mods can be installed separately. Utility Wheel automatically uses BetterUI's remembered color palette when both are installed.

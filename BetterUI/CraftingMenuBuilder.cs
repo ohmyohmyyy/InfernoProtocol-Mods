@@ -287,11 +287,6 @@ internal sealed class CraftingMenuBuilder
         RectTransform spacer = CreateRect("BetterUI_FooterSpacer", footer);
         SetLayout(spacer.gameObject, 0f, 0f, 1f, 1f, 1f, 0f);
 
-        if (crafting._showHandCraftingButton != null)
-        {
-            MoveToLayout(crafting._showHandCraftingButton.transform, footer, 42f, 46f, 0f);
-        }
-
         BuildThemeButton(footer);
 
         if (crafting._hideUncraftableButton != null)

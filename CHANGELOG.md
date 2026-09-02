@@ -1,5 +1,11 @@
 # Changelog
 
+## BetterUI 0.9.3 - 2026-09-02
+
+- Keeps the inventory's hand-crafting launcher in its original game-owned hierarchy.
+- Fixes the hand-crafting button disappearing after the crafting panel is closed.
+- Stops BetterUI from restyling that inventory-side launcher.
+
 ## Initial public release - 2026-09-02
 
 ### BetterUI 0.9.2

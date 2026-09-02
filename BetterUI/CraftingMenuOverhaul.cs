@@ -309,16 +309,9 @@ internal sealed class CraftingMenuOverhaul
             layout.childAlignment = TextAnchor.MiddleLeft;
         }
 
-        SymbolButton handCrafting = crafting._showHandCraftingButton;
-        if (handCrafting != null)
-        {
-            MakeFlat(handCrafting._textBackgroundImage, BetterUITheme.PanelSoft, BetterUITheme.BorderSoft);
-            MakeFlat(handCrafting._iconImage, BetterUITheme.AccentSoft, BetterUITheme.Accent);
-            BetterUIStyler.Text(handCrafting._buttonText, 15f, BetterUITheme.TextMuted, FontStyles.Bold);
-            LayoutElement handLayout = GetOrAddLayout(handCrafting.gameObject);
-            handLayout.minHeight = 42f;
-            handLayout.preferredHeight = 42f;
-        }
+        // This launcher belongs to the inventory UI, not the crafting panel.
+        // Reparenting or styling it prevents the game from restoring the button
+        // after hand crafting closes.
     }
 
     private void RefreshToolbarStates(CraftingTableUI crafting)
