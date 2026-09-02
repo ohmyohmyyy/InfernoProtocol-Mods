@@ -1,0 +1,17 @@
+BETTERUI 0.9.2 - MANUAL INSTALLATION
+
+1. Install the 64-bit IL2CPP build of BepInEx 6 for Inferno Protocol.
+2. Start the game once, then close it.
+3. Extract this archive into the Inferno Protocol game folder.
+4. Confirm this file exists:
+   BepInEx\plugins\BetterUI\InfernoProtocol.BetterUI.dll
+5. Start the game. The BepInEx console should report that BetterUI loaded.
+
+BetterUI changes only the crafting table interface. Use the color-wheel button in
+the crafting footer to change the theme. The selected theme is remembered.
+
+Configuration:
+BepInEx\config\com.holden.infernoprotocol.betterui.cfg
+
+Uninstall:
+Delete BepInEx\plugins\BetterUI\InfernoProtocol.BetterUI.dll

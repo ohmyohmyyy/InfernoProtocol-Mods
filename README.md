@@ -1,0 +1,141 @@
+# Inferno Protocol Mods
+
+Two independent quality-of-life mods for [Inferno Protocol on Steam](https://store.steampowered.com/app/3908940/Inferno_Protocol/).
+
+| Mod | Version | What it changes |
+| --- | --- | --- |
+| BetterUI | 0.9.2 | Rebuilds and polishes only the crafting-table interface. |
+| Utility Wheel | 0.2.0 | Adds a translucent controller radial menu for occupied hotbar slots. |
+
+The mods can be installed separately. Utility Wheel automatically uses BetterUI's remembered color palette when both are installed.
+
+## Requirements
+
+- Windows x64
+- Inferno Protocol through Steam
+- Unity IL2CPP x64 build of BepInEx 6
+
+These releases were tested with Inferno Protocol Steam build `25029929`, Unity `6000.4.11f1`, and BepInEx `6.0.0-be.785`. Inferno Protocol is in active development, so future game updates may require rebuilt mods.
+
+Use the official [BepInEx IL2CPP installation guide](https://docs.bepinex.dev/master/articles/user_guide/installation/unity_il2cpp.html) and [BepInEx downloads](https://github.com/BepInEx/BepInEx/releases). Select a Windows x64 Unity IL2CPP package, not a Mono package.
+
+## Manual installation
+
+1. Install BepInEx 6 into the Inferno Protocol game directory.
+2. Start the game once so BepInEx creates its folders, then close the game.
+3. Download the desired ZIP from the [latest release](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/latest).
+4. Extract the ZIP directly into the game directory. Allow Windows to merge the included `BepInEx` folder.
+5. Start the game and confirm that the BepInEx console reports the mod as loaded.
+
+The default Steam game directory is:
+
+```text
+C:\Program Files (x86)\Steam\steamapps\common\Inferno Protocol
+```
+
+After installation, the DLLs should be located at:
+
+```text
+BepInEx\plugins\BetterUI\InfernoProtocol.BetterUI.dll
+BepInEx\plugins\UtilityWheel\InfernoProtocol.UtilityWheel.dll
+```
+
+Do not place the release ZIP itself in `BepInEx\plugins`. Extract it first.
+
+## BetterUI
+
+BetterUI changes presentation components only inside the crafting table. It does not restyle the gameplay HUD, inventory, hotbar, storage, pause menu, or global tooltips.
+
+Features include:
+
+- a responsive, lightly translucent crafting layout;
+- larger recipe icons and readable component requirements;
+- refined categories, selection states, quantity badges, and craft-button states;
+- searchable recipes and live recipe availability updates;
+- green, blue, cyan, violet, and amber palettes;
+- a footer color-wheel button that cycles and remembers the selected palette;
+- `F8` to pause or resume BetterUI for the current session.
+
+Configuration is saved to:
+
+```text
+BepInEx\config\com.holden.infernoprotocol.betterui.cfg
+```
+
+## Utility Wheel
+
+Utility Wheel includes every occupied, visible hotbar slot rather than filtering for weapons. It is slightly transparent and matches the selected BetterUI palette when BetterUI is installed.
+
+Controller controls:
+
+- Hold `LB` to open the wheel.
+- Point with the right stick to select an item.
+- Release `LB` to equip the selected item.
+- Press `B` before releasing to cancel.
+
+The activation button can be changed from `LB` to `RB` in the config. A `Tab` keyboard fallback is enabled by default for testing or keyboard play.
+
+Configuration is saved to:
+
+```text
+BepInEx\config\com.holden.infernoprotocol.utilitywheel.cfg
+```
+
+## Uninstall
+
+Close the game, then delete the corresponding plugin directory:
+
+```text
+BepInEx\plugins\BetterUI
+BepInEx\plugins\UtilityWheel
+```
+
+Deleting a config file is optional. BepInEx will recreate it with defaults if the mod is installed again.
+
+## Troubleshooting
+
+### The mod does not appear
+
+- Confirm that the DLL is inside its plugin folder, not still inside the downloaded ZIP.
+- Confirm that the BepInEx console opens and reaches `Chainloader startup complete`.
+- Check `BepInEx\LogOutput.log` for the plugin name and the first error after it.
+- Confirm that you installed the Windows x64 Unity IL2CPP build of BepInEx 6.
+
+### `Duplicate type with name '<>O'`
+
+Some BepInEx interop outputs for this Unity version can contain duplicate compiler-helper types. The source install script includes a narrow repair tool for the affected generated interop files and preserves backups beside them:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build-all.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
+```
+
+Only use that repair with the exact duplicate-type error. After a game or BepInEx update, allow BepInEx to regenerate its interop files before rebuilding the mods.
+
+## Build from source
+
+Install the .NET 6 SDK, install and run BepInEx once, then execute this from PowerShell in the repository:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build-all.ps1
+```
+
+If the game is installed elsewhere, provide its path:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build-all.ps1 -GameDir 'D:\SteamLibrary\steamapps\common\Inferno Protocol'
+```
+
+Builds reference the BepInEx and generated game interop assemblies already present in the selected game directory. Those third-party assemblies are not included in this repository or its releases.
+
+To create the same release archives locally:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\package-release.ps1 -SkipBuild
+```
+
+The finished DLLs and ZIP archives are written to `dist`.
+
+## Notes
+
+This is an unofficial community project and is not affiliated with the developer or publisher of Inferno Protocol. No game-owned assemblies or assets are distributed with these mods.

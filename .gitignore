@@ -1,0 +1,8 @@
+.tools/
+.renamed-plugin-backups/
+**/bin/
+**/obj/
+dist/
+tools/InteropInspector/
+*.user
+*.suo

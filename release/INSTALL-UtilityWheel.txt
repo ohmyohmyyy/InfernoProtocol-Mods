@@ -1,0 +1,22 @@
+UTILITY WHEEL 0.2.0 - MANUAL INSTALLATION
+
+1. Install the 64-bit IL2CPP build of BepInEx 6 for Inferno Protocol.
+2. Start the game once, then close it.
+3. Extract this archive into the Inferno Protocol game folder.
+4. Confirm this file exists:
+   BepInEx\plugins\UtilityWheel\InfernoProtocol.UtilityWheel.dll
+5. Start the game. The BepInEx console should report that Utility Wheel loaded.
+
+Controller:
+- Hold LB to open the wheel.
+- Point with the right stick.
+- Release LB to equip the selected occupied hotbar slot.
+- Press B to cancel.
+
+Keyboard fallback: hold Tab, point with the mouse, and release Tab.
+
+Configuration:
+BepInEx\config\com.holden.infernoprotocol.utilitywheel.cfg
+
+Uninstall:
+Delete BepInEx\plugins\UtilityWheel\InfernoProtocol.UtilityWheel.dll
