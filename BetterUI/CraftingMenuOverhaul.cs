@@ -35,6 +35,16 @@ internal sealed class CraftingMenuOverhaul
     private TextMeshProUGUI _recipeHeading;
     private GameObject _replacementRoot;
     private RectTransform _themeButton;
+    private GameObject _requirementsSection;
+    private GameObject _fabricationSection;
+    private LayoutElement _fabricationLayout;
+    private CanvasGroup _fabricationCanvas;
+    private Image _fabricationIconBase;
+    private Image _fabricationIconFill;
+    private RectTransform _fabricationBarFill;
+    private TextMeshProUGUI _fabricationItemName;
+    private TextMeshProUGUI _fabricationPercent;
+    private bool _fabricationVisible;
     private int _paletteIndex = -1;
 
     internal void SetVisible(bool visible)
@@ -78,6 +88,92 @@ internal sealed class CraftingMenuOverhaul
         return true;
     }
 
+    internal void RefreshCraftingProgress(CraftingTableUI crafting)
+    {
+        if (crafting == null || _fabricationSection == null)
+        {
+            return;
+        }
+
+        CraftingProgressUI progress = crafting._craftingProgressUI;
+        bool visible = progress != null && progress.gameObject.activeSelf;
+        if (_fabricationVisible != visible)
+        {
+            _fabricationVisible = visible;
+            if (_requirementsSection != null)
+            {
+                _requirementsSection.SetActive(!visible);
+            }
+
+            if (_fabricationLayout != null)
+            {
+                _fabricationLayout.ignoreLayout = !visible;
+            }
+
+            if (_fabricationCanvas != null)
+            {
+                _fabricationCanvas.alpha = visible ? 1f : 0f;
+            }
+
+            _layoutRebuildPasses = Mathf.Max(_layoutRebuildPasses, 2);
+        }
+
+        if (!visible)
+        {
+            return;
+        }
+
+        Sprite sprite = progress.itemImage != null ? progress.itemImage.sprite : null;
+        if (_fabricationIconBase != null)
+        {
+            _fabricationIconBase.sprite = sprite;
+            _fabricationIconBase.enabled = sprite != null;
+        }
+
+        if (_fabricationIconFill != null)
+        {
+            _fabricationIconFill.sprite = sprite;
+            _fabricationIconFill.enabled = sprite != null;
+        }
+
+        float amount = Mathf.Clamp01(progress.progress);
+        if (progress.progressSlider != null)
+        {
+            float sliderAmount = progress.progressSlider.normalizedValue;
+            if (!float.IsNaN(sliderAmount) && !float.IsInfinity(sliderAmount))
+            {
+                amount = Mathf.Clamp01(sliderAmount);
+            }
+        }
+
+        if (_fabricationIconFill != null)
+        {
+            _fabricationIconFill.fillAmount = amount;
+        }
+
+        if (_fabricationBarFill != null)
+        {
+            _fabricationBarFill.anchorMax = new Vector2(amount, 1f);
+        }
+
+        SelectedCraftingRecipeUI selected = crafting._selectedRecipeUI;
+        if (_fabricationItemName != null && selected != null && selected._outputItemNameTMP != null)
+        {
+            _fabricationItemName.text = selected._outputItemNameTMP.text;
+        }
+
+        if (_fabricationPercent != null)
+        {
+            string count = progress.itemCountTMP != null
+                ? progress.itemCountTMP.text?.Trim()
+                : string.Empty;
+            string batch = string.IsNullOrEmpty(count) || count == "1"
+                ? string.Empty
+                : $"  //  BATCH {count}";
+            _fabricationPercent.text = $"FABRICATING  //  {Mathf.RoundToInt(amount * 100f)}%{batch}";
+        }
+    }
+
     private void RefreshPalette(CraftingTableUI crafting)
     {
         if (_replacementRoot == null || crafting == null)
@@ -116,11 +212,17 @@ internal sealed class CraftingMenuOverhaul
                 case "BetterUI_RecipeScroll":
                 case "BetterUI_DetailsHeader":
                 case "BetterUI_OutputSummary":
+                case "BetterUI_FabricationSection":
                     fill = BetterUITheme.CraftingWell;
                     break;
                 case "BetterUI_ThemeButton":
                 case "BetterUI_Scrollbar":
+                case "BetterUI_FabricationIconFrame":
+                case "BetterUI_FabricationTrack":
                     fill = BetterUITheme.PanelSoft;
+                    break;
+                case "BetterUI_FabricationBarFill":
+                    fill = BetterUITheme.Accent;
                     break;
                 case "Handle":
                     restyle = image.transform.parent != null
@@ -170,7 +272,11 @@ internal sealed class CraftingMenuOverhaul
                 case "BetterUI_DetailsHeading":
                 case "BetterUI_CommandPrompt":
                 case "BetterUI_MaterialsHeading":
+                case "BetterUI_FabricationHeading":
                     label.color = BetterUITheme.TextMuted;
+                    break;
+                case "BetterUI_FabricationPercent":
+                    label.color = BetterUITheme.Accent;
                     break;
             }
         }
@@ -220,6 +326,7 @@ internal sealed class CraftingMenuOverhaul
             ? _replacementRoot.transform.Find("BetterUI_CommandFooter/BetterUI_ThemeButton")
             : null;
         _themeButton = themeButton != null ? themeButton.GetComponent<RectTransform>() : null;
+        CacheFabricationWidgets();
         _paletteIndex = BetterUIPlugin.PaletteIndex;
         _configuredRecipes.Clear();
         _configuredIngredients.Clear();
@@ -248,7 +355,24 @@ internal sealed class CraftingMenuOverhaul
         ConfigureRecipeBrowser();
         StyleRecipeWorkspace(crafting._selectedRecipeUI);
         StyleProgress(crafting._craftingProgressUI);
+        RefreshCraftingProgress(crafting);
         BetterUIStyler.Scrollbars(crafting.transform);
+    }
+
+    private void CacheFabricationWidgets()
+    {
+        Transform root = _replacementRoot != null ? _replacementRoot.transform : null;
+        _requirementsSection = FindNamedDescendant(root, "BetterUI_RequirementsSection")?.gameObject;
+        Transform fabrication = FindNamedDescendant(root, "BetterUI_FabricationSection");
+        _fabricationSection = fabrication != null ? fabrication.gameObject : null;
+        _fabricationLayout = fabrication != null ? fabrication.GetComponent<LayoutElement>() : null;
+        _fabricationCanvas = fabrication != null ? fabrication.GetComponent<CanvasGroup>() : null;
+        _fabricationIconBase = FindNamedDescendant(fabrication, "BetterUI_FabricationIconBase")?.GetComponent<Image>();
+        _fabricationIconFill = FindNamedDescendant(fabrication, "BetterUI_FabricationIconFill")?.GetComponent<Image>();
+        _fabricationBarFill = FindNamedDescendant(fabrication, "BetterUI_FabricationBarFill")?.GetComponent<RectTransform>();
+        _fabricationItemName = FindNamedDescendant(fabrication, "BetterUI_FabricationItemName")?.GetComponent<TextMeshProUGUI>();
+        _fabricationPercent = FindNamedDescendant(fabrication, "BetterUI_FabricationPercent")?.GetComponent<TextMeshProUGUI>();
+        _fabricationVisible = false;
     }
 
     private static void StyleWindow(CraftingTableUI crafting)
@@ -1291,28 +1415,19 @@ internal sealed class CraftingMenuOverhaul
             return;
         }
 
-        Image progressSurface = BetterUIStyler.Surface(
-            progress.GetComponent<RectTransform>(),
-            BetterUITheme.PanelElevated,
-            BetterUITheme.Accent,
-            false);
-        MakeFlat(progressSurface, BetterUITheme.PanelElevated, BetterUITheme.Accent);
-        Slider slider = progress.progressSlider;
-        if (slider != null)
+        // The original component remains active because it owns the game's
+        // animation and completion timing. Only its legacy popup graphics are
+        // suppressed; RefreshCraftingProgress mirrors its live data into the
+        // integrated component-analysis card.
+        CanvasGroup canvasGroup = progress.GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
         {
-            MakeFlat(slider.GetComponent<Image>(), BetterUITheme.CraftingWell, BetterUITheme.BorderSoft);
-            LayoutElement layout = GetOrAddLayout(slider.gameObject);
-            layout.minHeight = 14f;
-            layout.preferredHeight = 14f;
+            canvasGroup = progress.gameObject.AddComponent<CanvasGroup>();
         }
 
-        MakeFlat(progress.progressFillImage, BetterUITheme.Accent, BetterUITheme.Accent);
-        if (progress.itemImage != null)
-        {
-            progress.itemImage.preserveAspect = true;
-        }
-
-        BetterUIStyler.Text(progress.itemCountTMP, 17f, BetterUITheme.Text, FontStyles.Bold);
+        canvasGroup.alpha = 0f;
+        canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
     }
 
     private static void StyleTerminalToggle(MazeButton button, bool active)
@@ -2036,6 +2151,30 @@ internal sealed class CraftingMenuOverhaul
             bottom = bottom
         };
         return padding;
+    }
+
+    private static Transform FindNamedDescendant(Transform root, string name)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        if (root.name == name)
+        {
+            return root;
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform result = FindNamedDescendant(root.GetChild(i), name);
+            if (result != null)
+            {
+                return result;
+            }
+        }
+
+        return null;
     }
 
     private static RectTransform FindReplacementPanel(Transform title)

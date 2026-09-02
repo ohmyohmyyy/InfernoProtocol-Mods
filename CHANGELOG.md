@@ -1,5 +1,12 @@
 # Changelog
 
+## BetterUI 0.9.4 - 2026-09-02
+
+- Replaces the legacy black crafting-progress popup with an integrated fabrication card inside component analysis.
+- Shows the live item icon, vertical icon fill, progress bar, percentage, and batch quantity while crafting.
+- Temporarily swaps the ingredient list for fabrication progress and restores it automatically when crafting finishes.
+- Keeps the game's original progress component active invisibly so crafting timing and completion behavior remain unchanged.
+
 ## BetterUI 0.9.3 - 2026-09-02
 
 - Keeps the inventory's hand-crafting launcher in its original game-owned hierarchy.

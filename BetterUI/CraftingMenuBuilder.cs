@@ -381,9 +381,7 @@ internal sealed class CraftingMenuBuilder
                 NormalizeRect(selectedRect);
                 selectedRect.anchorMin = Vector2.zero;
                 selectedRect.anchorMax = Vector2.one;
-                // Keep the live crafting-progress strip from covering the last
-                // requirement or action at the bottom of the scroll view.
-                selectedRect.offsetMin = new Vector2(10f, 76f);
+                selectedRect.offsetMin = new Vector2(10f, 10f);
                 selectedRect.offsetMax = new Vector2(-10f, -58f);
                 selectedRect.gameObject.SetActive(true);
                 HideLegacyDetailsHeading(selected);
@@ -392,22 +390,6 @@ internal sealed class CraftingMenuBuilder
             }
         }
 
-        CraftingProgressUI progress = crafting._craftingProgressUI;
-        if (progress != null)
-        {
-            RectTransform progressRect = progress.GetComponent<RectTransform>();
-            if (progressRect != null)
-            {
-                progressRect.SetParent(detailsPanel, false);
-                NormalizeRect(progressRect);
-                progressRect.anchorMin = new Vector2(0f, 0f);
-                progressRect.anchorMax = new Vector2(1f, 0f);
-                progressRect.pivot = new Vector2(0.5f, 0f);
-                progressRect.offsetMin = new Vector2(10f, 10f);
-                progressRect.offsetMax = new Vector2(-10f, 72f);
-                progressRect.SetAsLastSibling();
-            }
-        }
     }
 
     private static void ConfigureEmptyState(CraftingTableUI crafting, SelectedCraftingRecipeUI selected)
@@ -530,7 +512,19 @@ internal sealed class CraftingMenuBuilder
             SetLayout(selected._sliderContainer, 0f, 0f, 1f, 34f, 38f, 0f);
         }
 
-        TextMeshProUGUI materialsLabel = CreateLabel("BetterUI_MaterialsHeading", content, crafting._titleTMP);
+        RectTransform requirements = CreateRect("BetterUI_RequirementsSection", content);
+        VerticalLayoutGroup requirementsLayout = requirements.gameObject.AddComponent<VerticalLayoutGroup>();
+        requirementsLayout.spacing = 8f;
+        requirementsLayout.childAlignment = TextAnchor.UpperLeft;
+        requirementsLayout.childControlWidth = true;
+        requirementsLayout.childControlHeight = true;
+        requirementsLayout.childForceExpandWidth = true;
+        requirementsLayout.childForceExpandHeight = false;
+        ContentSizeFitter requirementsFitter = requirements.gameObject.AddComponent<ContentSizeFitter>();
+        requirementsFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        requirementsFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        TextMeshProUGUI materialsLabel = CreateLabel("BetterUI_MaterialsHeading", requirements, crafting._titleTMP);
         materialsLabel.text = "REQUIRED COMPONENTS  //  CURRENT BATCH";
         materialsLabel.fontSize = 15f;
         materialsLabel.fontStyle = FontStyles.Bold;
@@ -541,11 +535,11 @@ internal sealed class CraftingMenuBuilder
 
         if (selected._requiredItemsContainer != null)
         {
-            selected._requiredItemsContainer.SetParent(content, false);
+            selected._requiredItemsContainer.SetParent(requirements, false);
             SetLayout(selected._requiredItemsContainer.gameObject, 0f, 0f, 1f, 80f, 80f, 0f);
         }
 
-        RectTransform status = CreateRect("BetterUI_RequirementsStatus", content);
+        RectTransform status = CreateRect("BetterUI_RequirementsStatus", requirements);
         SetLayout(status.gameObject, 0f, 0f, 1f, 0f, 52f, 0f);
         VerticalLayoutGroup statusLayout = status.gameObject.AddComponent<VerticalLayoutGroup>();
         statusLayout.spacing = 5f;
@@ -565,6 +559,8 @@ internal sealed class CraftingMenuBuilder
         {
             SetLayout(selected._needBlueprintTmp.gameObject, 0f, 0f, 1f, 20f, 22f, 0f);
         }
+
+        BuildFabricationState(crafting, content);
 
         if (selected._craftButton != null)
         {
@@ -599,6 +595,171 @@ internal sealed class CraftingMenuBuilder
                 child.gameObject.SetActive(false);
             }
         }
+    }
+
+    private static void BuildFabricationState(CraftingTableUI crafting, RectTransform content)
+    {
+        RectTransform section = CreateSurface(
+            "BetterUI_FabricationSection",
+            content,
+            BetterUITheme.CraftingWell);
+        SetLayout(section.gameObject, 0f, 0f, 1f, 174f, 174f, 0f);
+        LayoutElement sectionLayout = section.GetComponent<LayoutElement>();
+        sectionLayout.ignoreLayout = true;
+        CanvasGroup sectionCanvas = section.gameObject.AddComponent<CanvasGroup>();
+        sectionCanvas.alpha = 0f;
+        sectionCanvas.interactable = false;
+        sectionCanvas.blocksRaycasts = false;
+
+        TextMeshProUGUI heading = CreateLabel(
+            "BetterUI_FabricationHeading",
+            section,
+            crafting._titleTMP);
+        heading.text = "FABRICATION IN PROGRESS";
+        heading.fontSize = 14f;
+        heading.fontStyle = FontStyles.Bold;
+        heading.color = BetterUITheme.TextMuted;
+        heading.characterSpacing = 1.4f;
+        heading.alignment = TextAlignmentOptions.MidlineLeft;
+        RectTransform headingRect = heading.GetComponent<RectTransform>();
+        headingRect.anchorMin = new Vector2(0f, 1f);
+        headingRect.anchorMax = new Vector2(1f, 1f);
+        headingRect.pivot = new Vector2(0.5f, 1f);
+        headingRect.offsetMin = new Vector2(16f, -42f);
+        headingRect.offsetMax = new Vector2(-16f, -12f);
+
+        RectTransform iconFrame = CreateSurface(
+            "BetterUI_FabricationIconFrame",
+            section,
+            BetterUITheme.PanelSoft);
+        iconFrame.anchorMin = new Vector2(0f, 0f);
+        iconFrame.anchorMax = new Vector2(0f, 0f);
+        iconFrame.pivot = new Vector2(0f, 0f);
+        iconFrame.anchoredPosition = new Vector2(16f, 18f);
+        iconFrame.sizeDelta = new Vector2(96f, 96f);
+
+        Image iconBase = CreateArtwork("BetterUI_FabricationIconBase", iconFrame);
+        iconBase.color = new Color(1f, 1f, 1f, 0.2f);
+        Stretch(iconBase.rectTransform, 8f);
+
+        Image iconFill = CreateArtwork("BetterUI_FabricationIconFill", iconFrame);
+        iconFill.type = Image.Type.Filled;
+        iconFill.fillMethod = Image.FillMethod.Vertical;
+        iconFill.fillOrigin = (int)Image.OriginVertical.Bottom;
+        iconFill.fillAmount = 0f;
+        Stretch(iconFill.rectTransform, 8f);
+
+        TextMeshProUGUI itemName = CreateLabel(
+            "BetterUI_FabricationItemName",
+            section,
+            crafting._titleTMP);
+        itemName.text = "FABRICATING ITEM";
+        itemName.fontSize = 20f;
+        itemName.fontStyle = FontStyles.Bold;
+        itemName.color = BetterUITheme.Text;
+        itemName.alignment = TextAlignmentOptions.BottomLeft;
+        itemName.enableWordWrapping = false;
+        itemName.overflowMode = TextOverflowModes.Ellipsis;
+        RectTransform nameRect = itemName.GetComponent<RectTransform>();
+        nameRect.anchorMin = new Vector2(0f, 0f);
+        nameRect.anchorMax = new Vector2(1f, 0f);
+        nameRect.pivot = new Vector2(0f, 0f);
+        nameRect.offsetMin = new Vector2(132f, 72f);
+        nameRect.offsetMax = new Vector2(-18f, 106f);
+
+        TextMeshProUGUI progressText = CreateLabel(
+            "BetterUI_FabricationPercent",
+            section,
+            crafting._titleTMP);
+        progressText.text = "FABRICATING // 0%";
+        progressText.fontSize = 13f;
+        progressText.fontStyle = FontStyles.Bold;
+        progressText.color = BetterUITheme.Accent;
+        progressText.characterSpacing = 1f;
+        progressText.alignment = TextAlignmentOptions.MidlineLeft;
+        RectTransform progressTextRect = progressText.GetComponent<RectTransform>();
+        progressTextRect.anchorMin = new Vector2(0f, 0f);
+        progressTextRect.anchorMax = new Vector2(1f, 0f);
+        progressTextRect.pivot = new Vector2(0f, 0f);
+        progressTextRect.offsetMin = new Vector2(132f, 43f);
+        progressTextRect.offsetMax = new Vector2(-18f, 69f);
+
+        RectTransform track = CreateSurface(
+            "BetterUI_FabricationTrack",
+            section,
+            BetterUITheme.PanelSoft);
+        track.anchorMin = new Vector2(0f, 0f);
+        track.anchorMax = new Vector2(1f, 0f);
+        track.pivot = new Vector2(0.5f, 0f);
+        track.offsetMin = new Vector2(132f, 22f);
+        track.offsetMax = new Vector2(-18f, 34f);
+
+        RectTransform fill = CreateSurface(
+            "BetterUI_FabricationBarFill",
+            track,
+            BetterUITheme.Accent);
+        fill.anchorMin = Vector2.zero;
+        fill.anchorMax = new Vector2(0f, 1f);
+        fill.pivot = new Vector2(0f, 0.5f);
+        fill.offsetMin = Vector2.zero;
+        fill.offsetMax = Vector2.zero;
+
+        CraftingProgressUI progress = crafting._craftingProgressUI;
+        if (progress != null)
+        {
+            RectTransform legacy = progress.GetComponent<RectTransform>();
+            if (legacy != null)
+            {
+                legacy.SetParent(section, false);
+                NormalizeRect(legacy);
+                legacy.anchorMin = Vector2.zero;
+                legacy.anchorMax = Vector2.one;
+                legacy.offsetMin = Vector2.zero;
+                legacy.offsetMax = Vector2.zero;
+                legacy.SetAsFirstSibling();
+            }
+
+            CanvasGroup canvasGroup = progress.GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+            {
+                canvasGroup = progress.gameObject.AddComponent<CanvasGroup>();
+            }
+
+            canvasGroup.alpha = 0f;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+        }
+
+        // This parent deliberately remains active. The game's Show() method starts
+        // the progress animation on its original component, which cannot begin a
+        // coroutine beneath an inactive parent. Layout and visibility are instead
+        // switched by CraftingMenuOverhaul as crafting starts and finishes.
+    }
+
+    private static Image CreateArtwork(string name, Transform parent)
+    {
+        var gameObject = new GameObject(
+            name,
+            Il2CppType.Of<RectTransform>(),
+            Il2CppType.Of<CanvasRenderer>(),
+            Il2CppType.Of<Image>());
+        gameObject.transform.SetParent(parent, false);
+        Image image = gameObject.GetComponent<Image>();
+        image.material = null;
+        image.sprite = null;
+        image.type = Image.Type.Simple;
+        image.color = Color.white;
+        image.preserveAspect = true;
+        image.raycastTarget = false;
+        return image;
+    }
+
+    private static void Stretch(RectTransform rect, float inset)
+    {
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = new Vector2(inset, inset);
+        rect.offsetMax = new Vector2(-inset, -inset);
     }
 
     private static Scrollbar CreateScrollbar(RectTransform parent)

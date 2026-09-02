@@ -41,6 +41,10 @@ public sealed class BetterUIController : MonoBehaviour
             _nextRefresh = 0f;
         }
 
+        // Progress needs frame-by-frame updates so the in-panel fill animation is
+        // smooth even though the rest of the crafting screen refreshes slowly.
+        _craftingMenu.RefreshCraftingProgress(crafting);
+
         float now = Time.unscaledTime;
         if (now < _nextRefresh || now < _retryAt)
         {

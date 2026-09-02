@@ -39,9 +39,9 @@ Copy-Item -LiteralPath (Join-Path $repoRoot 'release\INSTALL-BetterUI.txt') -Des
 Copy-Item -LiteralPath $utilityWheelDll -Destination (Join-Path $utilityWheelStage 'BepInEx\plugins\UtilityWheel\InfernoProtocol.UtilityWheel.dll')
 Copy-Item -LiteralPath (Join-Path $repoRoot 'release\INSTALL-UtilityWheel.txt') -Destination (Join-Path $utilityWheelStage 'INSTALL.txt')
 
-Compress-Archive -Path (Join-Path $betterUiStage '*') -DestinationPath (Join-Path $dist 'BetterUI-v0.9.3.zip')
+Compress-Archive -Path (Join-Path $betterUiStage '*') -DestinationPath (Join-Path $dist 'BetterUI-v0.9.4.zip')
 Compress-Archive -Path (Join-Path $utilityWheelStage '*') -DestinationPath (Join-Path $dist 'UtilityWheel-v0.2.0.zip')
-Copy-Item -LiteralPath $betterUiDll -Destination (Join-Path $dist 'InfernoProtocol.BetterUI-v0.9.3.dll')
+Copy-Item -LiteralPath $betterUiDll -Destination (Join-Path $dist 'InfernoProtocol.BetterUI-v0.9.4.dll')
 Copy-Item -LiteralPath $utilityWheelDll -Destination (Join-Path $dist 'InfernoProtocol.UtilityWheel-v0.2.0.dll')
 
 Remove-Item -LiteralPath $staging -Recurse -Force
