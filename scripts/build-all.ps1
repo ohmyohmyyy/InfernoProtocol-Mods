@@ -13,3 +13,8 @@ if ($LASTEXITCODE -ne 0) {
 if ($LASTEXITCODE -ne 0) {
     throw 'Utility Wheel build failed.'
 }
+
+& (Join-Path (Split-Path -Parent $PSScriptRoot) 'BetterLights\build.ps1') -GameDir $GameDir
+if ($LASTEXITCODE -ne 0) {
+    throw 'BetterLights build failed.'
+}

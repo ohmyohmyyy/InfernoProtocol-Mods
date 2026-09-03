@@ -1,11 +1,12 @@
 # Inferno Protocol Mods
 
-Two independent quality-of-life mods for [Inferno Protocol on Steam](https://store.steampowered.com/app/3908940/Inferno_Protocol/).
+Three independent quality-of-life mods for [Inferno Protocol on Steam](https://store.steampowered.com/app/3908940/Inferno_Protocol/).
 
 | Mod | Version | What it changes |
 | --- | --- | --- |
 | BetterUI | 0.9.4 | Rebuilds and polishes only the crafting-table interface. |
 | Utility Wheel | 0.2.0 | Adds a translucent controller radial menu for occupied hotbar slots. |
+| BetterLights | 0.3.0 | Customizes individual torch and lantern colors with controller and mouse support. |
 
 The mods can be installed separately. Utility Wheel automatically uses BetterUI's remembered color palette when both are installed.
 
@@ -38,6 +39,7 @@ After installation, the DLLs should be located at:
 ```text
 BepInEx\plugins\BetterUI\InfernoProtocol.BetterUI.dll
 BepInEx\plugins\UtilityWheel\InfernoProtocol.UtilityWheel.dll
+BepInEx\plugins\BetterLights\InfernoProtocol.BetterLights.dll
 ```
 
 Do not place the release ZIP itself in `BepInEx\plugins`. Extract it first.
@@ -82,6 +84,23 @@ Configuration is saved to:
 BepInEx\config\com.holden.infernoprotocol.utilitywheel.cfg
 ```
 
+## BetterLights
+
+BetterLights changes individual placed torch and environmental lantern colors. One selection updates the emitted light, flame particles where present, and emissive visuals. Each selection is remembered.
+
+- Stand within roughly 3 metres and look at a light.
+- Controller: press `R3`, choose with the right stick or D-pad, then press `R3` to save.
+- Mouse: press `F7` or middle mouse, drag on the wheel or click a preset, then click `Save`.
+- Use `L3` or the visible `Original` button to restore the original color; use `B`, `Escape`, or `Cancel` to discard a preview.
+
+In multiplayer, the host controls colors. Players with BetterLights 0.3.0 receive the host's current colors and later saved changes. Unmodded players remain compatible but see original colors.
+
+Configuration is saved to:
+
+```text
+BepInEx\config\com.holden.infernoprotocol.betterlights.cfg
+```
+
 ## Uninstall
 
 Close the game, then delete the corresponding plugin directory:
@@ -89,6 +108,7 @@ Close the game, then delete the corresponding plugin directory:
 ```text
 BepInEx\plugins\BetterUI
 BepInEx\plugins\UtilityWheel
+BepInEx\plugins\BetterLights
 ```
 
 Deleting a config file is optional. BepInEx will recreate it with defaults if the mod is installed again.

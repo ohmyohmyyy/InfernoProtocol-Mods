@@ -1,5 +1,13 @@
 # Changelog
 
+## BetterLights 0.3.0 - 2026-09-03
+
+- Adds individual color controls for placed torches and environmental lanterns.
+- Changes emitted light, flames where present, and emissive visuals together.
+- Supports controller, keyboard, and direct mouse color-wheel controls.
+- Saves preferences for each light and uses a closer 3-metre interaction range.
+- Adds opt-in, host-authoritative synchronization between players with BetterLights installed.
+
 ## BetterUI 0.9.4 - 2026-09-02
 
 - Replaces the legacy black crafting-progress popup with an integrated fabrication card inside component analysis.

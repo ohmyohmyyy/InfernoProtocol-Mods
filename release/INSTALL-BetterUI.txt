@@ -1,4 +1,4 @@
-BETTERUI 0.9.3 - MANUAL INSTALLATION
+BETTERUI 0.9.4 - MANUAL INSTALLATION
 
 1. Install the 64-bit IL2CPP build of BepInEx 6 for Inferno Protocol.
 2. Start the game once, then close it.
