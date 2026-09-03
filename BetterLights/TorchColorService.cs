@@ -8,6 +8,24 @@ internal static class TorchColorService
 {
     private static readonly Color NaturalFire = new(1f, 0.43f, 0.12f, 1f);
     private static readonly Color NaturalLantern = new(1f, 0.72f, 0.42f, 1f);
+    private static readonly string[] EmissionColorProperties =
+    {
+        "_EmissionColor",
+        "_EmissiveColor",
+        "_EmissiveColorLDR",
+        "_EmissiveColorHDR",
+        "_EmissionTint",
+        "_EmissiveTint",
+        "_GlowColor"
+    };
+
+    private static readonly string[] EmissionMapProperties =
+    {
+        "_EmissionMap",
+        "_EmissiveColorMap",
+        "_EmissiveMap",
+        "_GlowMap"
+    };
 
     internal static bool IsSupported(APlacable placable)
     {
@@ -45,6 +63,7 @@ internal static class TorchColorService
     internal static LightTarget CreateLanternTarget(Light light)
     {
         Transform root = FindLanternRoot(light);
+        Transform identity = FindLanternIdentity(light);
         if (root == null || !root.gameObject.activeInHierarchy)
         {
             return null;
@@ -59,7 +78,9 @@ internal static class TorchColorService
         return new LightTarget
         {
             Root = root,
-            Key = BetterLightsPlugin.GetSceneLightKey("Lantern", root),
+            // Keep the original named-light position as the persistent identity
+            // even when Root expands upward to include the lantern mesh.
+            Key = BetterLightsPlugin.GetSceneLightKey("Lantern", identity != null ? identity : root),
             Name = "LANTERN",
             HasFlame = false
         };
@@ -222,10 +243,25 @@ internal static class TorchColorService
 
             try
             {
-                Material material = renderer.material;
-                if (material != null && ApplyMaterialColor(material, color, hasFlame))
+                if (hasFlame)
                 {
-                    changed++;
+                    Material flameMaterial = renderer.material;
+                    if (flameMaterial != null && ApplyFlameMaterialColor(flameMaterial, color))
+                    {
+                        changed++;
+                    }
+
+                    continue;
+                }
+
+                var materials = renderer.materials;
+                for (int materialIndex = 0; materials != null && materialIndex < materials.Length; materialIndex++)
+                {
+                    Material material = materials[materialIndex];
+                    if (material != null && ApplyLanternEmissionColor(material, color))
+                    {
+                        changed++;
+                    }
                 }
             }
             catch (Exception exception)
@@ -237,18 +273,64 @@ internal static class TorchColorService
         return changed;
     }
 
-    private static bool ApplyMaterialColor(Material material, Color color, bool hasFlame)
+    private static bool ApplyLanternEmissionColor(Material material, Color color)
     {
         bool changed = false;
+        bool hasEmissionMap = HasEmissionMap(material);
+        bool hasActiveEmission = false;
+        float originalIntensity = 0f;
+        for (int i = 0; i < EmissionColorProperties.Length; i++)
+        {
+            string property = EmissionColorProperties[i];
+            if (!material.HasProperty(property))
+            {
+                continue;
+            }
+
+            Color existing = material.GetColor(property);
+            float intensity = Mathf.Max(existing.r, Mathf.Max(existing.g, existing.b));
+            originalIntensity = Mathf.Max(originalIntensity, intensity);
+            hasActiveEmission |= intensity > 0.01f;
+        }
+
+        string materialName = material.name ?? string.Empty;
+        bool looksLikeEmissiveSurface = ContainsAny(materialName, "emiss", "glow", "bulb", "glass");
+        if (hasEmissionMap || hasActiveEmission || looksLikeEmissiveSurface)
+        {
+            // Preserve useful emission without turning a small mask into a large
+            // HDR bloom source. Repeated color previews remain inside this cap.
+            float hdrIntensity = Mathf.Clamp(originalIntensity, 0.8f, 2f);
+            for (int i = 0; i < EmissionColorProperties.Length; i++)
+            {
+                string property = EmissionColorProperties[i];
+                if (!material.HasProperty(property))
+                {
+                    continue;
+                }
+
+                bool ldrProperty = property.EndsWith("LDR", StringComparison.OrdinalIgnoreCase) ||
+                                   property.IndexOf("Tint", StringComparison.OrdinalIgnoreCase) >= 0;
+                material.SetColor(property, ldrProperty ? color : color * hdrIntensity);
+                changed = true;
+            }
+
+            if (changed)
+            {
+                material.globalIlluminationFlags &= ~MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            }
+        }
+
+        return changed;
+    }
+
+    private static bool ApplyFlameMaterialColor(Material material, Color color)
+    {
+        bool changed = false;
+        string materialName = material.name ?? string.Empty;
         if (material.HasProperty("_EmissionColor"))
         {
             material.SetColor("_EmissionColor", color * 2.4f);
             changed = true;
-        }
-
-        if (!hasFlame)
-        {
-            return changed;
         }
 
         if (material.HasProperty("_TintColor"))
@@ -257,7 +339,6 @@ internal static class TorchColorService
             changed = true;
         }
 
-        string materialName = material.name ?? string.Empty;
         bool looksLikeFlame = materialName.IndexOf("fire", StringComparison.OrdinalIgnoreCase) >= 0 ||
                               materialName.IndexOf("flame", StringComparison.OrdinalIgnoreCase) >= 0;
         if (looksLikeFlame && material.HasProperty("_BaseColor"))
@@ -274,6 +355,38 @@ internal static class TorchColorService
         return changed;
     }
 
+    private static bool HasEmissionMap(Material material)
+    {
+        for (int i = 0; i < EmissionMapProperties.Length; i++)
+        {
+            string property = EmissionMapProperties[i];
+            if (material.HasProperty(property) && material.GetTexture(property) != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ContainsAny(string value, params string[] fragments)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < fragments.Length; i++)
+        {
+            if (value.IndexOf(fragments[i], StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static Transform FindLanternRoot(Light light)
     {
         if (light == null)
@@ -282,6 +395,41 @@ internal static class TorchColorService
         }
 
         Transform current = light.transform;
+        Transform namedLantern = null;
+        int namedDepth = -1;
+        for (int depth = 0; current != null && depth < 8; depth++)
+        {
+            if (ContainsLantern(current.gameObject.name))
+            {
+                namedLantern ??= current;
+                if (namedDepth < 0)
+                {
+                    namedDepth = depth;
+                }
+            }
+
+            if (namedLantern != null && depth - namedDepth <= 2)
+            {
+                Renderer[] renderers = current.GetComponentsInChildren<Renderer>(true);
+                if (renderers != null && renderers.Length > 0 && renderers.Length <= 12)
+                {
+                    return current;
+                }
+            }
+            else if (namedLantern != null)
+            {
+                break;
+            }
+
+            current = current.parent;
+        }
+
+        return namedLantern;
+    }
+
+    private static Transform FindLanternIdentity(Light light)
+    {
+        Transform current = light != null ? light.transform : null;
         for (int depth = 0; current != null && depth < 8; depth++)
         {
             if (ContainsLantern(current.gameObject.name))

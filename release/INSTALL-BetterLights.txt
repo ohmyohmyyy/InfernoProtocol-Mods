@@ -1,17 +1,17 @@
-BETTERLIGHTS 0.3.0 - MANUAL INSTALLATION
+BETTERLIGHTS 0.3.1 - MANUAL INSTALLATION
 
 1. Install the 64-bit IL2CPP build of BepInEx 6 for Inferno Protocol.
 2. Start the game once, allow BepInEx setup to finish, then close the game.
 3. Extract this archive into the Inferno Protocol game folder.
 4. Confirm this file exists:
    BepInEx\plugins\BetterLights\InfernoProtocol.BetterLights.dll
-5. Start the game. The BepInEx console should report BetterLights 0.3.0 loaded.
+5. Start the game. The BepInEx console should report BetterLights 0.3.1 loaded.
 
 Controller: target a light and press R3.
 Mouse: target a light and press F7 or the middle mouse button.
 
 For synchronized multiplayer colors, both the host and connecting player need
-BetterLights 0.3.0. Unmodded players can connect but see original light colors.
+BetterLights 0.3.1. Unmodded players can connect but see original light colors.
 
 Configuration:
 BepInEx\config\com.holden.infernoprotocol.betterlights.cfg

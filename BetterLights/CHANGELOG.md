@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1 - 2026-09-03
+
+- Expands lantern targets from the light child to the complete visual object so their mesh renderers are included.
+- Tints emission properties across every lantern material slot while leaving base/albedo colors untouched.
+- Supports common Standard, URP, HDRP, and custom glow-property names and preserves existing HDR brightness.
+- Keeps existing saved lantern identities stable while expanding the visual root.
+
 ## 0.3.0 - 2026-09-03
 
 - Adds full mouse control for the color wheel, presets, save, original-color reset, and cancel actions.

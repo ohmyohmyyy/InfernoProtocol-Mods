@@ -2,7 +2,7 @@
 
 BetterLights is a per-light color customization mod for Inferno Protocol.
 
-BetterLights customizes placed `Torch`, `Standing Torch`, and `Wall Torch` objects individually. It also detects environmental lantern objects from the game's scene hierarchy. One selected color updates the emitted Unity light and any relevant fire or emissive visuals.
+BetterLights customizes placed `Torch`, `Standing Torch`, and `Wall Torch` objects individually. It also detects environmental lantern objects from the game's scene hierarchy. One selected color updates the emitted Unity light and any relevant fire or emissive visuals. Lantern emission masks are recolored independently, leaving the lamp body and its base texture unchanged.
 
 Craftable torches are saved by the game's persistent placable ID. Environmental lanterns are saved by their stable world position. Both restore automatically from the BepInEx config.
 

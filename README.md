@@ -6,7 +6,7 @@ Three independent quality-of-life mods for [Inferno Protocol on Steam](https://s
 | --- | --- | --- | --- |
 | BetterUI | 0.9.4 | Rebuilds and polishes only the crafting-table interface. | [Download BetterUI 0.9.4](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.02.2) |
 | Utility Wheel | 0.2.0 | Adds a translucent controller radial menu for occupied hotbar slots. | [Download Utility Wheel 0.2.0](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.02) |
-| BetterLights | 0.3.0 | Customizes individual torch and lantern colors with controller and mouse support. | [Download BetterLights 0.3.0](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.03) |
+| BetterLights | 0.3.1 | Customizes individual torch and lantern colors with controller and mouse support. | [Download BetterLights 0.3.1](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.03.1) |
 
 The mods can be installed separately. Utility Wheel automatically uses BetterUI's remembered color palette when both are installed.
 
@@ -93,7 +93,7 @@ BetterLights changes individual placed torch and environmental lantern colors. O
 - Mouse: press `F7` or middle mouse, drag on the wheel or click a preset, then click `Save`.
 - Use `L3` or the visible `Original` button to restore the original color; use `B`, `Escape`, or `Cancel` to discard a preview.
 
-In multiplayer, the host controls colors. Players with BetterLights 0.3.0 receive the host's current colors and later saved changes. Unmodded players remain compatible but see original colors.
+In multiplayer, the host controls colors. Players with BetterLights 0.3.1 receive the host's current colors and later saved changes. Unmodded players remain compatible but see original colors.
 
 Configuration is saved to:
 

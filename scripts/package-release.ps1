@@ -46,10 +46,10 @@ Copy-Item -LiteralPath (Join-Path $repoRoot 'release\INSTALL-BetterLights.txt') 
 
 Compress-Archive -Path (Join-Path $betterUiStage '*') -DestinationPath (Join-Path $dist 'BetterUI-v0.9.4.zip')
 Compress-Archive -Path (Join-Path $utilityWheelStage '*') -DestinationPath (Join-Path $dist 'UtilityWheel-v0.2.0.zip')
-Compress-Archive -Path (Join-Path $betterLightsStage '*') -DestinationPath (Join-Path $dist 'BetterLights-v0.3.0.zip')
+Compress-Archive -Path (Join-Path $betterLightsStage '*') -DestinationPath (Join-Path $dist 'BetterLights-v0.3.1.zip')
 Copy-Item -LiteralPath $betterUiDll -Destination (Join-Path $dist 'InfernoProtocol.BetterUI-v0.9.4.dll')
 Copy-Item -LiteralPath $utilityWheelDll -Destination (Join-Path $dist 'InfernoProtocol.UtilityWheel-v0.2.0.dll')
-Copy-Item -LiteralPath $betterLightsDll -Destination (Join-Path $dist 'InfernoProtocol.BetterLights-v0.3.0.dll')
+Copy-Item -LiteralPath $betterLightsDll -Destination (Join-Path $dist 'InfernoProtocol.BetterLights-v0.3.1.dll')
 
 Remove-Item -LiteralPath $staging -Recurse -Force
 Get-ChildItem -LiteralPath $dist | Select-Object Name, Length

@@ -1,5 +1,12 @@
 # Changelog
 
+## BetterLights 0.3.1 - 2026-09-03
+
+- Recolors lantern emissive material channels while preserving the lamp body's base texture.
+- Finds lantern renderers across the complete visual object and supports multiple material slots.
+- Preserves each material's original emission brightness to prevent excessive bloom.
+- Keeps torch flame rendering on its established conservative path.
+
 ## BetterLights 0.3.0 - 2026-09-03
 
 - Adds individual color controls for placed torches and environmental lanterns.
