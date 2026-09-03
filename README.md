@@ -2,11 +2,11 @@
 
 Three independent quality-of-life mods for [Inferno Protocol on Steam](https://store.steampowered.com/app/3908940/Inferno_Protocol/).
 
-| Mod | Version | What it changes |
-| --- | --- | --- |
-| BetterUI | 0.9.4 | Rebuilds and polishes only the crafting-table interface. |
-| Utility Wheel | 0.2.0 | Adds a translucent controller radial menu for occupied hotbar slots. |
-| BetterLights | 0.3.0 | Customizes individual torch and lantern colors with controller and mouse support. |
+| Mod | Version | What it changes | Latest release |
+| --- | --- | --- | --- |
+| BetterUI | 0.9.4 | Rebuilds and polishes only the crafting-table interface. | [Download BetterUI 0.9.4](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.02.2) |
+| Utility Wheel | 0.2.0 | Adds a translucent controller radial menu for occupied hotbar slots. | [Download Utility Wheel 0.2.0](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.02) |
+| BetterLights | 0.3.0 | Customizes individual torch and lantern colors with controller and mouse support. | [Download BetterLights 0.3.0](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.03) |
 
 The mods can be installed separately. Utility Wheel automatically uses BetterUI's remembered color palette when both are installed.
 
