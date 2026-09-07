@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../FieldQuests/QuestModel.cs" Link="QuestModel.cs" />
+    <Compile Include="../../FieldQuests/BoardSiteRules.cs" Link="BoardSiteRules.cs" />
+    <Compile Include="../../FieldQuests/BoardPlacement.cs" Link="BoardPlacement.cs" />
+    <Compile Include="../../FieldQuests/SkinCatalog.cs" Link="SkinCatalog.cs" />
+    <Compile Include="../../FieldQuests/FinishPattern.cs" Link="FinishPattern.cs" />
+    <Compile Include="../../FieldQuests/StorageAccess.cs" Link="StorageAccess.cs" />
+    <PackageReference Include="dnlib" Version="4.5.0" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>10</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>InfernoProtocol.FieldQuests</AssemblyName>
+    <Version>0.5.0</Version>
+    <Product>ContentPlus</Product>
+    <Authors>FrankMods</Authors>
+    <Description>Quest board, XP progression and unlockable equipment finishes for Inferno Protocol.</Description>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Inferno Protocol</GameDir>
+    <Core>$(GameDir)\BepInEx\core</Core>
+    <Interop>$(GameDir)\BepInEx\interop</Interop>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(Core)\BepInEx.Core.dll" Private="false" />
+    <Reference Include="$(Core)\BepInEx.Unity.IL2CPP.dll" Private="false" />
+    <Reference Include="$(Core)\Il2CppInterop.Runtime.dll" Private="false" />
+    <Reference Include="$(Core)\0Harmony.dll" Private="false" />
+    <Reference Include="$(Interop)\Assembly-CSharp.dll" Private="false" />
+    <Reference Include="$(Interop)\Il2Cppmscorlib.dll" Private="false" />
+    <Reference Include="$(Interop)\Il2CppSystem.dll" Private="false" />
+    <Reference Include="$(Interop)\Il2CppSystem.Core.dll" Private="false" />
+    <Reference Include="$(Interop)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="$(Interop)\UnityEngine.PhysicsModule.dll" Private="false" />
+    <Reference Include="$(Interop)\UnityEngine.AIModule.dll" Private="false" />
+    <Reference Include="$(Interop)\UnityEngine.UI.dll" Private="false" />
+    <Reference Include="$(Interop)\UnityEngine.UIModule.dll" Private="false" />
+    <Reference Include="$(Interop)\UnityEngine.TextRenderingModule.dll" Private="false" />
+    <Reference Include="$(Interop)\Unity.TextMeshPro.dll" Private="false" />
+    <Reference Include="$(Interop)\Unity.InputSystem.dll" Private="false" />
+    <Reference Include="$(Interop)\Unity.Netcode.Runtime.dll" Private="false" />
+    <Reference Include="$(Interop)\Unity.Collections.dll" Private="false" />
+  </ItemGroup>
+</Project>

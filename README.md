@@ -1,6 +1,8 @@
 # Inferno Protocol Mods
 
-Three independent quality-of-life mods for [Inferno Protocol on Steam](https://store.steampowered.com/app/3908940/Inferno_Protocol/).
+Independent gameplay and quality-of-life mods for [Inferno Protocol on Steam](https://store.steampowered.com/app/3908940/Inferno_Protocol/).
+
+**ContentPlus 0.5.0** adds a quest board, XP progression and twelve unlockable equipment finishes. [Details and installation](FieldQuests/README.md) · [Download](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/contentplus-v0.5.0).
 
 | Mod | Version | What it changes | Latest release |
 | --- | --- | --- | --- |
