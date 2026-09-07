@@ -1,5 +1,7 @@
 # Inferno Protocol Mods
 
+All mods are free. If you'd like to support their development, [buy me a coffee](https://buymeacoffee.com/frankmods). Thank you!
+
 Independent gameplay and quality-of-life mods for [Inferno Protocol on Steam](https://store.steampowered.com/app/3908940/Inferno_Protocol/).
 
 | Mod | Version | What it changes | Latest release |
