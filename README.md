@@ -2,13 +2,12 @@
 
 Independent gameplay and quality-of-life mods for [Inferno Protocol on Steam](https://store.steampowered.com/app/3908940/Inferno_Protocol/).
 
-**ContentPlus 0.5.0** adds a quest board, XP progression and twelve unlockable equipment finishes. [Details and installation](FieldQuests/README.md) · [Download](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/contentplus-v0.5.0).
-
 | Mod | Version | What it changes | Latest release |
 | --- | --- | --- | --- |
 | BetterUI | 0.9.4 | Rebuilds and polishes only the crafting-table interface. | [Download BetterUI 0.9.4](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.02.2) |
 | Utility Wheel | 0.2.0 | Adds a translucent controller radial menu for occupied hotbar slots. | [Download Utility Wheel 0.2.0](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.02) |
 | BetterLights | 0.3.1 | Customizes individual torch and lantern colors with controller and mouse support. | [Download BetterLights 0.3.1](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.03.1) |
+| [ContentPlus](FieldQuests/README.md) | 0.5.0 | Adds a quest board, XP progression and twelve unlockable equipment finishes. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/ContentPlus/) |
 
 The mods can be installed separately. Utility Wheel automatically uses BetterUI's remembered color palette when both are installed.
 
