@@ -6,7 +6,7 @@ Independent gameplay and quality-of-life mods for [Inferno Protocol on Steam](ht
 
 | Mod | Version | What it changes | Latest release |
 | --- | --- | --- | --- |
-| BetterUI | 0.10.0 | Polishes crafting and displays acquired genetics as an interactive DNA tree. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/BetterUI/) |
+| BetterUI | 0.10.1 | Polishes crafting and displays acquired genetics as an interactive DNA tree. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/BetterUI/) |
 | Utility Wheel | 0.2.0 | Adds a translucent controller radial menu for occupied hotbar slots. | [Download Utility Wheel 0.2.0](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.02) |
 | BetterLights | 0.3.1 | Customizes individual torch and lantern colors with controller and mouse support. | [Download BetterLights 0.3.1](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.03.1) |
 | [ContentPlus](FieldQuests/README.md) | 0.5.0 | Adds a quest board, XP progression and twelve unlockable equipment finishes. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/ContentPlus/) |

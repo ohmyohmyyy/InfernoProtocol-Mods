@@ -22,8 +22,19 @@ internal sealed class GeneticsTree : IDisposable
         internal Image Halo;
         internal Image Glow;
         internal TextMeshProUGUI Caption;
+        internal RectTransform HaloRect;
+        internal int VisualState = -1;
     }
     private readonly List<Gene> _genes = new();
+    private readonly List<Gene> _snapshots = new();
+    private readonly HashSet<int> _seen = new();
+    private static uint _revision;
+    private uint _lastRevision;
+    internal static void Invalidate() { unchecked { _revision++; } }
+    private int _palette = -1;
+    private GeneBranchGraphic _branches;
+    private RectMask2D _treeMask;
+    private bool _motionInitialized, _lastReduced;
     private readonly List<InputActionMap> _maps = new();
     private readonly List<InputAction> _disabledActions = new();
     private GameObject _canvas, _drawing;
@@ -40,7 +51,7 @@ internal sealed class GeneticsTree : IDisposable
     private float _treeHeight;
     private CanvasGroup _nativeGroup;
     private bool _addedGroup, _nativeInteractable, _nativeBlocks, _look, _cursor, _active, _failed, _release;
-    private float _nativeAlpha, _refresh, _opened, _repeat, _zoom = 1;
+    private float _nativeAlpha, _opened, _repeat, _zoom = 1;
     private CursorLockMode _lock;
     private int _selected, _held;
     private Sprite _disc, _ring;
@@ -54,6 +65,11 @@ internal sealed class GeneticsTree : IDisposable
         try
         {
             if (_release && Released()) RestoreInput();
+            if (!enabled || !BetterUIPlugin.GeneticsEnabled.Value || _failed)
+            {
+                if (_active) Close();
+                return;
+            }
             // The native isActive getter dereferences its singleton before the
             // gameplay UI exists. Startup/scene teardown is normal, not a fault.
             var native = GeneticFeaturesUI.instance;
@@ -68,9 +84,15 @@ internal sealed class GeneticsTree : IDisposable
             Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
             PlayerInputDispatcher.SetEnableLookInput(false);
             foreach (var map in _maps) if (map.enabled) map.Disable();
-            if (Time.unscaledTime >= _refresh) { ReadGenes(); _refresh = Time.unscaledTime + .75f; }
+            if (_revision != _lastRevision || _palette != BetterUIPlugin.PaletteIndex) ReadGenes();
             Input();
-            if (_active) Animate();
+            if (_active)
+            {
+                Animate();
+                // Native scissoring also covers a restored cached graphic and
+                // viewport resizing. This does not rebuild the branch mesh.
+                if(_branches!=null&&_treeMask!=null) _branches.SetClipRect(_treeMask.canvasRect,true);
+            }
         }
         catch (Exception e)
         {
@@ -95,32 +117,42 @@ internal sealed class GeneticsTree : IDisposable
         _addedGroup = _nativeGroup == null;
         if (_addedGroup) _nativeGroup = native.gameObject.AddComponent<CanvasGroup>();
         _nativeAlpha = _nativeGroup.alpha; _nativeInteractable = _nativeGroup.interactable; _nativeBlocks = _nativeGroup.blocksRaycasts;
-        Build(); ReadGenes();
+        if (_canvas == null) { _drawing=null; _genes.Clear(); Build(); }
+        _canvas.SetActive(true); _appearance.alpha=0;
+        _dragging=false; _held=0; _hovered=-1; _motionInitialized=false;
+        ReadGenes();
         _nativeGroup.alpha = 0; _nativeGroup.interactable = false; _nativeGroup.blocksRaycasts = false;
         BetterUIPlugin.ModLog.LogInfo("Genetics tree opened with " + _genes.Count + " native gene fields.");
-        _refresh = Time.unscaledTime + .75f;
     }
     private void ReadGenes()
     {
         var native = GeneticFeaturesUI.instance;
         if (native == null || native.scollViewContent == null) return;
         var fields = native.scollViewContent.GetComponentsInChildren<GeneticFeaturesFieldUI>(false);
-        var next = new List<Gene>();
+        // Only called at open or after a native data/localization notification.
+        var next = _snapshots;
+        _seen.Clear(); int used=0;
         foreach (var field in fields)
         {
             if (field == null || !field.gameObject.activeInHierarchy) continue;
             int id = (int)field.attachedFeature;
-            if (next.Exists(g => g.Id == id)) continue;
-            next.Add(new Gene { Id = id, Stage = field.attachedStage, Name = field.title?.text ?? field.attachedFeature.ToString(),
-                Description = field.description?.text ?? "", Icon = field.icon?.sprite });
+            if (!_seen.Add(id)) continue;
+            if (used==next.Count) next.Add(new Gene());
+            var snapshot=next[used++]; snapshot.Id=id; snapshot.Stage=field.attachedStage;
+            snapshot.Name=field.title?.text ?? field.attachedFeature.ToString();
+            snapshot.Description=field.description?.text ?? ""; snapshot.Icon=field.icon?.sprite;
         }
+        if(next.Count>used) next.RemoveRange(used,next.Count-used);
         next.Sort((a,b) => a.Id.CompareTo(b.Id));
-        bool same = next.Count == _genes.Count;
+        _lastRevision=_revision;
+        bool same = next.Count == _genes.Count && _palette == BetterUIPlugin.PaletteIndex;
         for (int i = 0; same && i < next.Count; i++) same = next[i].Id == _genes[i].Id && next[i].Stage == _genes[i].Stage &&
             next[i].Name == _genes[i].Name && next[i].Description == _genes[i].Description && next[i].Icon == _genes[i].Icon;
         if (same && _drawing != null) return;
         int keep = _genes.Count > 0 ? _genes[_selected].Id : -1;
-        _genes.Clear(); _genes.AddRange(next);
+        _palette=BetterUIPlugin.PaletteIndex;
+        _genes.Clear();
+        foreach(var entry in next) _genes.Add(new Gene { Id=entry.Id, Stage=entry.Stage, Name=entry.Name, Description=entry.Description, Icon=entry.Icon });
         _selected = Math.Max(0, _genes.FindIndex(g => g.Id == keep));
         Draw(); Select(_selected, true);
     }
@@ -144,7 +176,7 @@ internal sealed class GeneticsTree : IDisposable
         _resetButton=Box("RecenterHit",bg.transform,.71f,.91f,.895f,.965f,new Color(Accent.r,Accent.g,Accent.b,.08f)).rectTransform;
         Label("Recenter",_resetButton,0,0,1,1,"Recenter",16,new Color(.6f,.8f,.8f)).alignment=TextAlignmentOptions.Center;
         var well = Box("TreeViewport",bg.transform,.025f,.12f,.69f,.835f,Color.clear);
-        _viewport = well.rectTransform; well.gameObject.AddComponent<RectMask2D>();
+        _viewport = well.rectTransform; _treeMask=well.gameObject.AddComponent<RectMask2D>();
         var space = Box("TreeSpace",well.transform,.5f,.5f,.5f,.5f,Color.clear);
         _space = space.rectTransform; _space.sizeDelta = new Vector2(1100,760);
         Box("DetailRule",bg.transform,.71f,.22f,.711f,.76f,new Color(Accent.r,Accent.g,Accent.b,.12f));
@@ -161,10 +193,23 @@ internal sealed class GeneticsTree : IDisposable
     {
         if (_drawing != null) { _drawing.SetActive(false); UnityEngine.Object.Destroy(_drawing); }
         _sparks.Clear();
-        _drawing = Box("Branches",_space,0,0,1,1,Color.clear).gameObject;
+        _drawing = new GameObject("TreeLayers",Il2CppType.Of<RectTransform>());
+        _drawing.transform.SetParent(_space,false);
+        var drawingRect=_drawing.GetComponent<RectTransform>(); drawingRect.anchorMin=Vector2.zero; drawingRect.anchorMax=Vector2.one; drawingRect.offsetMin=drawingRect.offsetMax=Vector2.zero;
         var root = _drawing.transform;
+        var branchObject=new GameObject("BatchedBranches",Il2CppType.Of<RectTransform>(),Il2CppType.Of<CanvasRenderer>(),Il2CppType.Of<GeneBranchGraphic>(),Il2CppType.Of<Canvas>());
+        branchObject.transform.SetParent(root,false);
+        _branches=branchObject.GetComponent<GeneBranchGraphic>(); _branches.raycastTarget=false;
+        _branches.rectTransform.anchorMin=Vector2.zero; _branches.rectTransform.anchorMax=Vector2.one; _branches.rectTransform.offsetMin=_branches.rectTransform.offsetMax=Vector2.zero;
+        var motion=Layer("Highlights",root);
+        var nodes=Layer("StaticNodes",root);
         int rows = Math.Max(1, (_genes.Count+1)/2);
         _treeHeight=GeneTreeLayout.Height(_genes.Count);
+        // RectMask2D culls a Graphic by its rect: include offscreen branches so
+        // the mesh doesn't disappear when panning to a tall genome's ends.
+        _branches.rectTransform.anchorMin=_branches.rectTransform.anchorMax=new Vector2(.5f,.5f);
+        _branches.rectTransform.sizeDelta=new Vector2(1100,Mathf.Max(760,_treeHeight+100));
+        _branches.InitializeMasking();
         Vector2 previousA = default, previousB = default;
         for (int i=0; i<=rows*12; i++)
         {
@@ -189,16 +234,18 @@ internal sealed class GeneticsTree : IDisposable
                 Line(root,prev,point,1.5f,new Color(Accent.r,Accent.g,Accent.b,.3f)); prev=point;
             }
             _soft ??= SoftGlow();
-            gene.Glow=At("Bloom",root,end,new Vector2(135,135),new Color(Accent.r,Accent.g,Accent.b,.13f)); gene.Glow.sprite=_soft;
-            gene.Halo=At("Halo",root,end,new Vector2(82,82),Accent); gene.Halo.sprite=_ring;
-            var core=At("Gene",root,end,new Vector2(73,73),new Color(.045f,.085f,.10f)); core.sprite=_disc;
-            var icon=At("Icon",root,end,new Vector2(44,44),Color.white); icon.sprite=gene.Icon; icon.preserveAspect=true; icon.enabled=gene.Icon!=null;
-            var title=Label("Name",root,0,0,0,0,gene.Name,17,_ink);
+            gene.Glow=At("Bloom",motion,end,new Vector2(135,135),new Color(Accent.r,Accent.g,Accent.b,.13f)); gene.Glow.sprite=_soft;
+            gene.Halo=At("Halo",motion,end,new Vector2(82,82),Accent); gene.Halo.sprite=_ring; gene.HaloRect=gene.Halo.rectTransform;
+            var core=At("Gene",nodes,end,new Vector2(73,73),new Color(.045f,.085f,.10f)); core.sprite=_disc;
+            var icon=At("Icon",nodes,end,new Vector2(44,44),Color.white); icon.sprite=gene.Icon; icon.preserveAspect=true; icon.enabled=gene.Icon!=null;
+            var title=Label("Name",nodes,0,0,0,0,gene.Name,17,_ink);
             title.rectTransform.anchorMin=title.rectTransform.anchorMax=new Vector2(.5f,.5f);
             title.rectTransform.sizeDelta=new Vector2(180,48); title.rectTransform.anchoredPosition=end+new Vector2(0,-66);
             title.alignment=TextAlignmentOptions.Center; gene.Caption=title;
         }
-        for(int i=0;i<2;i++) { var spark=At("Life",root,Vector2.zero,new Vector2(5,5),new Color(Accent.r,Accent.g,Accent.b,.5f)); spark.sprite=_disc; _sparks.Add(spark.rectTransform); }
+        _branches.SetVerticesDirty();
+        for(int i=0;i<2;i++) { var spark=At("Life",motion,Vector2.zero,new Vector2(5,5),new Color(Accent.r,Accent.g,Accent.b,.5f)); spark.sprite=_disc; _sparks.Add(spark.rectTransform); }
+        _motionInitialized=false;
         _count.text = _genes.Count==1?"1 discovered gene":$"{_genes.Count} discovered genes";
         if (_genes.Count==0) { _name.text="Room to grow"; _description.text="Your discovered genes will bloom here as you explore."; _stage.text="Your journey has just begun"; _detailIcon.enabled=false; }
     }
@@ -271,39 +318,51 @@ internal sealed class GeneticsTree : IDisposable
     {
         bool reduced=BetterUIPlugin.GeneticsReducedMotion.Value;
         float dt=Mathf.Min(Time.unscaledDeltaTime,.05f);
-        _appearance.alpha=reduced?1:Mathf.Clamp01((Time.unscaledTime-_opened)/.22f);
+        if(_appearance.alpha<1) _appearance.alpha=reduced?1:Mathf.Clamp01((Time.unscaledTime-_opened)/.22f);
         if(_focusing)
         {
             _space.anchoredPosition=reduced?_focusTarget:Vector2.Lerp(_space.anchoredPosition,_focusTarget,1-Mathf.Exp(-14*dt));
             if((_space.anchoredPosition-_focusTarget).sqrMagnitude<.25f) _focusing=false;
         }
+        Color accent=Accent;
+        bool motionChanged=!_motionInitialized||_lastReduced!=reduced;
+        float breathe=reduced?0:Mathf.Sin((Time.unscaledTime-_opened)*1.7f)*.018f;
+        float blend=1-Mathf.Exp(-12*dt);
         for(int i=0;i<_genes.Count;i++)
         {
             var gene=_genes[i]; bool selected=i==_selected, hover=i==_hovered;
-            float breathe=reduced?0:Mathf.Sin((Time.unscaledTime-_opened)*1.7f)*.018f;
-            float target=selected?1.06f+breathe:hover?1.035f:1;
-            gene.Halo.rectTransform.localScale=Vector3.Lerp(gene.Halo.rectTransform.localScale,Vector3.one*target,reduced?1:1-Mathf.Exp(-12*dt));
-            gene.Halo.color=selected?new Color(Accent.r,Accent.g,Accent.b,.9f):hover?new Color(Accent.r,Accent.g,Accent.b,.65f):new Color(Accent.r,Accent.g,Accent.b,.25f);
-            gene.Glow.color=new Color(Accent.r,Accent.g,Accent.b,selected?.23f+breathe:hover?.14f:.04f);
-            gene.Caption.color=selected?_ink:hover?Color.Lerp(_ink,Accent,.25f):new Color(.56f,.71f,.73f);
+            int state=selected?2:hover?1:0;
+            if(gene.VisualState!=state||motionChanged)
+            {
+                gene.VisualState=state;
+                gene.HaloRect.localScale=Vector3.one*(selected?1.06f:hover?1.035f:1);
+                gene.Halo.color=new Color(accent.r,accent.g,accent.b,selected?.9f:hover?.65f:.25f);
+                gene.Glow.color=new Color(accent.r,accent.g,accent.b,selected?.23f:hover?.14f:.04f);
+                gene.Caption.color=selected?_ink:hover?Color.Lerp(_ink,accent,.25f):new Color(.56f,.71f,.73f);
+            }
+            if(selected&&!reduced)
+            {
+                gene.HaloRect.localScale=Vector3.Lerp(gene.HaloRect.localScale,Vector3.one*(1.06f+breathe),blend);
+                gene.Glow.color=new Color(accent.r,accent.g,accent.b,.23f+breathe);
+            }
         }
         for(int i=0;i<_sparks.Count;i++)
         {
-            _sparks[i].gameObject.SetActive(!reduced);
+            if(motionChanged) _sparks[i].gameObject.SetActive(!reduced);
             if(reduced) continue;
             float t=Mathf.Repeat((Time.unscaledTime-_opened)*.065f+i*.5f,1);
             float y=(t-.5f)*_treeHeight;
             float x=Mathf.Sin(t*Mathf.PI*Math.Max(1,(_genes.Count+1)/2))*18*(i==0?1:-1);
             _sparks[i].anchoredPosition=new Vector2(x,y);
         }
+        _lastReduced=reduced; _motionInitialized=true;
     }
     private void Close()
     {
         if(!_active) return; _active=false; _release=true;
         if(_nativeGroup!=null) { _nativeGroup.alpha=_nativeAlpha; _nativeGroup.interactable=_nativeInteractable; _nativeGroup.blocksRaycasts=_nativeBlocks; if(_addedGroup) UnityEngine.Object.Destroy(_nativeGroup); }
         _nativeGroup=null;
-        if(_canvas!=null) UnityEngine.Object.Destroy(_canvas);
-        _canvas=null; _drawing=null; _genes.Clear();
+        if(_canvas!=null) _canvas.SetActive(false);
     }
     private static bool Released()
     {
@@ -319,6 +378,8 @@ internal sealed class GeneticsTree : IDisposable
     public void Dispose()
     {
         Close(); if(_release) RestoreInput();
+        if(_canvas!=null) UnityEngine.Object.Destroy(_canvas);
+        _canvas=null; _drawing=null; _branches=null; _genes.Clear(); _snapshots.Clear(); _sparks.Clear(); _seen.Clear();
         foreach(var sprite in new[]{_disc,_ring,_soft}) if(sprite!=null) { UnityEngine.Object.Destroy(sprite.texture); UnityEngine.Object.Destroy(sprite); }
         _disc=null; _ring=null; _soft=null;
     }
@@ -332,10 +393,16 @@ internal sealed class GeneticsTree : IDisposable
     {
         var image=Box(name,parent,.5f,.5f,.5f,.5f,color); image.rectTransform.sizeDelta=size; image.rectTransform.anchoredPosition=pos; return image;
     }
-    private static void Line(Transform parent,Vector2 a,Vector2 b,float width,Color color)
+    private void Line(Transform parent,Vector2 a,Vector2 b,float width,Color color)
     {
-        var image=At("Strand",parent,(a+b)*.5f,new Vector2(Vector2.Distance(a,b),width),color);
-        image.rectTransform.localRotation=Quaternion.Euler(0,0,Mathf.Atan2(b.y-a.y,b.x-a.x)*Mathf.Rad2Deg);
+        _branches.AddSegment(a,b,width,color);
+    }
+    private static Transform Layer(string name,Transform parent)
+    {
+        var go=new GameObject(name,Il2CppType.Of<RectTransform>(),Il2CppType.Of<Canvas>());
+        go.transform.SetParent(parent,false);
+        var rect=go.GetComponent<RectTransform>(); rect.anchorMin=Vector2.zero; rect.anchorMax=Vector2.one; rect.offsetMin=rect.offsetMax=Vector2.zero;
+        return go.transform;
     }
     private static TextMeshProUGUI Label(string name,Transform parent,float x0,float y0,float x1,float y1,string text,int size,Color color)
     {

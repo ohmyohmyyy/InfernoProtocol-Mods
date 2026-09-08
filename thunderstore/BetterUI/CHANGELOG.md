@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.1
+
+performance improvement for GeneUI
+
 ## 0.10.0
 
 - Replace the genetics list with a compact, translucent DNA tree using native gene icons and descriptions.

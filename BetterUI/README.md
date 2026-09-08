@@ -1,4 +1,4 @@
-# BetterUI 0.10.0
+# BetterUI 0.10.1
 
 Polished crafting menus and a compact genetics tree for Inferno Protocol. This mod changes presentation only, not crafting costs/times, gene acquisition, gene stages or effects.
 
@@ -27,6 +27,6 @@ Only the local player needs BetterUI. No genetics networking or save changes are
 
 ## Validation
 
-Build: zero warnings/errors. 4,162 layout/navigation assertions cover bounds, overlap and controller reachability through 64 genes. Local gameplay logs confirm the panel opens with 28 native gene fields. Broad resolution/accessibility and multiplayer testing is not exhaustive.
+Build: zero warnings/errors. 4,380 assertions cover layout, controller reachability and batched line geometry through 64 genes. Local gameplay logs confirm the panel opens with 28 native gene fields; the optimized build's clipping fix was tested in game. Broad resolution/accessibility and multiplayer testing is not exhaustive.
 
 Build using `dotnet build BetterUI/BetterUI.csproj -c Release`; run tests with `dotnet run --project tests/GeneticsLayout.Tests/GeneticsLayout.Tests.csproj -c Release`. Supply `-p:GameDir="path to game"` when building against a different installation. Game-generated interop assemblies are required and are not distributed with the source.

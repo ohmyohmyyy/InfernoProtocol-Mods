@@ -4,6 +4,7 @@ using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using Game.UI;
 using HarmonyLib;
+using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
 
 namespace InfernoProtocol.BetterUI;
@@ -49,11 +50,14 @@ public sealed class BetterUIPlugin : BasePlugin
                 "Remembered crafting-terminal palette: 0 green, 1 blue, 2 cyan, 3 violet, 4 amber.",
                 new AcceptableValueRange<int>(0, BetterUITheme.PaletteCount - 1)));
 
+        ClassInjector.RegisterTypeInIl2Cpp<GeneBranchGraphic>();
         _controller = AddComponent<BetterUIController>();
         _harmony = new Harmony(PluginInfo.Guid);
         _harmony.PatchAll(typeof(CraftingVisibilityPatches));
+        _harmony.PatchAll(typeof(GeneticsRefreshPatches));
         Log.LogInfo($"{PluginInfo.Name} {PluginInfo.Version} loaded");
         Log.LogInfo("Genetics tree: compact organic layout, read-only gene display and reduced-motion support.");
+        Log.LogInfo("GeneUI: batched branches, cached panel and event-driven gene refresh.");
     }
 
     public override bool Unload()
@@ -92,6 +96,20 @@ public sealed class BetterUIPlugin : BasePlugin
         return float.IsNaN(value) || float.IsInfinity(value)
             ? fallback
             : Mathf.Clamp(value, minimum, maximum);
+    }
+
+    [HarmonyPatch]
+    private static class GeneticsRefreshPatches
+    {
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GeneticFeaturesUI), nameof(GeneticFeaturesUI.UpdateList))]
+        private static void ListChanged() { GeneticsTree.Invalidate(); }
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GeneticFeaturesFieldUI), nameof(GeneticFeaturesFieldUI.SetFeature))]
+        private static void FeatureChanged() { GeneticsTree.Invalidate(); }
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GeneticFeaturesFieldUI), nameof(GeneticFeaturesFieldUI.UpdateLocalization))]
+        private static void LanguageChanged() { GeneticsTree.Invalidate(); }
     }
 
     [HarmonyPatch]
