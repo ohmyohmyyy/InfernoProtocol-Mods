@@ -16,6 +16,8 @@ public sealed class BetterUIPlugin : BasePlugin
 
     internal static ManualLogSource ModLog { get; private set; }
     internal static ConfigEntry<bool> Enabled { get; private set; }
+    internal static ConfigEntry<bool> GeneticsEnabled { get; private set; }
+    internal static ConfigEntry<bool> GeneticsReducedMotion { get; private set; }
     internal static ConfigEntry<float> RefreshInterval { get; private set; }
     internal static ConfigEntry<int> ColorPalette { get; private set; }
     internal static float RefreshSeconds => Sanitize(RefreshInterval.Value, 0.5f, 0.2f, 5f);
@@ -27,7 +29,11 @@ public sealed class BetterUIPlugin : BasePlugin
     {
         ModLog = Log;
         Enabled = Config.Bind("General", "Enabled", true,
-            "Enables the BetterUI crafting menu. F8 pauses or resumes it for the current session.");
+            "Enables BetterUI crafting and genetics presentation. F8 pauses or resumes it for the current session.");
+        GeneticsEnabled = Config.Bind("Genetics", "Enabled", true,
+            "Displays acquired genetics as a navigable DNA tree. Presentation only; disable to keep the original genetics list.");
+        GeneticsReducedMotion = Config.Bind("Genetics", "ReducedMotion", false,
+            "Disables decorative DNA motion and uses immediate focus transitions in the genetics panel.");
         RefreshInterval = Config.Bind(
             "General",
             "RefreshInterval",
@@ -47,6 +53,7 @@ public sealed class BetterUIPlugin : BasePlugin
         _harmony = new Harmony(PluginInfo.Guid);
         _harmony.PatchAll(typeof(CraftingVisibilityPatches));
         Log.LogInfo($"{PluginInfo.Name} {PluginInfo.Version} loaded");
+        Log.LogInfo("Genetics tree: compact organic layout, read-only gene display and reduced-motion support.");
     }
 
     public override bool Unload()

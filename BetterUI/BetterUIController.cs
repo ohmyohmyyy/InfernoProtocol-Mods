@@ -6,13 +6,13 @@ using UnityEngine.InputSystem;
 namespace InfernoProtocol.BetterUI;
 
 /// <summary>
-/// Keeps BetterUI deliberately scoped to the crafting screen. In particular,
-/// this controller never scans or modifies the always-present gameplay,
-/// inventory, storage, hotbar, pause-menu, or tooltip hierarchies.
+/// Styles crafting and the explicitly opened genetics panel only.
+/// No global gameplay HUD, storage or hotbar styling.
 /// </summary>
 public sealed class BetterUIController : MonoBehaviour
 {
     private readonly CraftingMenuOverhaul _craftingMenu = new();
+    private readonly GeneticsTree _genetics = new();
     private float _nextRefresh;
     private float _retryAt;
     private bool _sessionEnabled = true;
@@ -26,6 +26,7 @@ public sealed class BetterUIController : MonoBehaviour
     private void Update()
     {
         HandleToggle();
+        _genetics.Tick(_sessionEnabled && BetterUIPlugin.Enabled.Value);
 
         CraftingTableUI crafting = CraftingTableUI.instance;
         bool enabled = _sessionEnabled && BetterUIPlugin.Enabled.Value;
@@ -97,4 +98,6 @@ public sealed class BetterUIController : MonoBehaviour
             _craftingMenu.SetVisible(false);
         }
     }
+
+    private void OnDestroy() { _genetics.Dispose(); }
 }

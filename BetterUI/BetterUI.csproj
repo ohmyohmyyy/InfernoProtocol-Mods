@@ -7,9 +7,9 @@
     <AssemblyName>InfernoProtocol.BetterUI</AssemblyName>
     <RootNamespace>InfernoProtocol.BetterUI</RootNamespace>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>0.9.4</Version>
-    <FileVersion>0.9.4.0</FileVersion>
-    <AssemblyVersion>0.9.4.0</AssemblyVersion>
+    <Version>0.10.0</Version>
+    <FileVersion>0.10.0.0</FileVersion>
+    <AssemblyVersion>0.10.0.0</AssemblyVersion>
     <Deterministic>true</Deterministic>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <DebugType>portable</DebugType>

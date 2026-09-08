@@ -1,21 +1,27 @@
 param(
     [string]$GameDir = 'C:\Program Files (x86)\Steam\steamapps\common\Inferno Protocol',
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+    [ValidateSet('ContentPlus', 'BetterUI')][string]$Mod = 'ContentPlus'
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 if (-not $SkipBuild) {
-    & (Join-Path $repo 'FieldQuests\build.ps1') -GameDir $GameDir
-    if ($LASTEXITCODE -ne 0) { throw 'ContentPlus build failed.' }
+    if ($Mod -eq 'BetterUI') {
+        & dotnet build (Join-Path $repo 'BetterUI\BetterUI.csproj') -c Release -p:GameDir="$GameDir"
+        if ($LASTEXITCODE -ne 0) { throw 'BetterUI build failed.' }
+        & dotnet run --project (Join-Path $repo 'tests\GeneticsLayout.Tests\GeneticsLayout.Tests.csproj') -c Release
+    } else { & (Join-Path $repo 'FieldQuests\build.ps1') -GameDir $GameDir }
+    if ($LASTEXITCODE -ne 0) { throw "$Mod verification failed." }
 }
-$meta = Join-Path $repo 'thunderstore\ContentPlus'
+$meta = Join-Path $repo "thunderstore\$Mod"
 $manifest = Get-Content -LiteralPath (Join-Path $meta 'manifest.json') -Raw | ConvertFrom-Json
-if ($manifest.name -ne 'ContentPlus' -or $manifest.version_number -notmatch '^\d+\.\d+\.\d+$' -or
+if ($manifest.name -ne $Mod -or $manifest.version_number -notmatch '^\d+\.\d+\.\d+$' -or
     $manifest.description.Length -gt 250 -or [string]::IsNullOrWhiteSpace($manifest.description) -or
     @($manifest.dependencies).Count -ne 1 -or $manifest.dependencies[0] -ne 'FrankMods-InfernoProtocolInteropFix-1.0.0') {
-    throw 'Invalid ContentPlus manifest.'
+    throw "Invalid $Mod manifest."
 }
-$dll = Join-Path $repo 'FieldQuests\bin\Release\net6.0\InfernoProtocol.FieldQuests.dll'
+$project = if ($Mod -eq 'BetterUI') { 'BetterUI' } else { 'FieldQuests' }
+$dll = Join-Path $repo "$project\bin\Release\net6.0\InfernoProtocol.$project.dll"
 if ([version](Get-Item -LiteralPath $dll).VersionInfo.FileVersion -ne [version]($manifest.version_number + '.0')) {
     throw 'DLL and manifest versions differ.'
 }
@@ -39,9 +45,9 @@ while ($position -lt $bytes.Length) {
     $position += 12 + [int64]$length
     if ($position -gt $bytes.Length) { throw 'Invalid PNG chunk.' }
 }
-$output = Join-Path $repo 'dist\contentplus'
+$output = Join-Path $repo ('dist\' + $Mod.ToLowerInvariant())
 New-Item -ItemType Directory -Path $output -Force | Out-Null
-$archive = Join-Path $output ('ContentPlus-' + $manifest.version_number + '.zip')
+$archive = Join-Path $output ($Mod + '-' + $manifest.version_number + '.zip')
 if (Test-Path -LiteralPath $archive) { throw "Archive already exists; preserve or move it before rebuilding: $archive" }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 Add-Type -AssemblyName System.IO.Compression
@@ -50,7 +56,7 @@ try {
     foreach ($name in @('manifest.json', 'README.md', 'CHANGELOG.md', 'icon.png')) {
         [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, (Join-Path $meta $name), $name) | Out-Null
     }
-    [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $dll, 'BepInEx/plugins/FieldQuests/InfernoProtocol.FieldQuests.dll') | Out-Null
+    [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $dll, "BepInEx/plugins/$project/InfernoProtocol.$project.dll") | Out-Null
 } finally { $zip.Dispose() }
 $zip = [IO.Compression.ZipFile]::OpenRead($archive)
 try {
@@ -58,4 +64,4 @@ try {
     $zip.Entries | Select-Object FullName, Length
 } finally { $zip.Dispose() }
 Get-FileHash -LiteralPath $archive -Algorithm SHA256
-Write-Output "Validated ContentPlus package: $archive"
+Write-Output "Validated $Mod package: $archive"

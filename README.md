@@ -6,7 +6,7 @@ Independent gameplay and quality-of-life mods for [Inferno Protocol on Steam](ht
 
 | Mod | Version | What it changes | Latest release |
 | --- | --- | --- | --- |
-| BetterUI | 0.9.4 | Rebuilds and polishes only the crafting-table interface. | [Download BetterUI 0.9.4](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.02.2) |
+| BetterUI | 0.10.0 | Polishes crafting and displays acquired genetics as an interactive DNA tree. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/BetterUI/) |
 | Utility Wheel | 0.2.0 | Adds a translucent controller radial menu for occupied hotbar slots. | [Download Utility Wheel 0.2.0](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.02) |
 | BetterLights | 0.3.1 | Customizes individual torch and lantern colors with controller and mouse support. | [Download BetterLights 0.3.1](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.03.1) |
 | [ContentPlus](FieldQuests/README.md) | 0.5.0 | Adds a quest board, XP progression and twelve unlockable equipment finishes. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/ContentPlus/) |
@@ -49,7 +49,7 @@ Do not place the release ZIP itself in `BepInEx\plugins`. Extract it first.
 
 ## BetterUI
 
-BetterUI changes presentation components only inside the crafting table. It does not restyle the gameplay HUD, inventory, hotbar, storage, pause menu, or global tooltips.
+BetterUI refines crafting and the genetics panel without changing gameplay. Acquired genes appear in a compact DNA tree with mouse/controller navigation, pan/zoom and reduced-motion support. [Full BetterUI details and setup](BetterUI/README.md).
 
 Features include:
 
