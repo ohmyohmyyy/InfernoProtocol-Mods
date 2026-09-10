@@ -7,9 +7,10 @@ Independent gameplay and quality-of-life mods for [Inferno Protocol on Steam](ht
 | Mod | Version | What it changes | Latest release |
 | --- | --- | --- | --- |
 | BetterUI | 0.10.1 | Polishes crafting and displays acquired genetics as an interactive DNA tree. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/BetterUI/) |
-| Utility Wheel | 0.2.0 | Adds a translucent controller radial menu for occupied hotbar slots. | [Download Utility Wheel 0.2.0](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.02) |
-| BetterLights | 0.3.1 | Customizes individual torch and lantern colors with controller and mouse support. | [Download BetterLights 0.3.1](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/releases/tag/v2026.09.03.1) |
+| Utility Wheel | 0.2.3 | Adds a translucent controller radial menu for occupied hotbar slots. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/UtilityWheel/) |
+| BetterLights | 0.3.3 | Customizes individual torch and lantern colors with controller and mouse support. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/BetterLights/) |
 | [ContentPlus](FieldQuests/README.md) | 0.5.0 | Adds a quest board, XP progression and twelve unlockable equipment finishes. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/ContentPlus/) |
+| [Renovator](Renovator/README.md) | 0.5.0 | Moves and aligns placed objects and applies curated finishes to building surfaces. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/Renovator/) |
 
 The mods can be installed separately. Utility Wheel automatically uses BetterUI's remembered color palette when both are installed.
 
@@ -19,7 +20,13 @@ The mods can be installed separately. Utility Wheel automatically uses BetterUI'
 - Inferno Protocol through Steam
 - Unity IL2CPP x64 build of BepInEx 6
 
-These releases were tested with Inferno Protocol Steam build `25029929`, Unity `6000.4.11f1`, and BepInEx `6.0.0-be.785`. Inferno Protocol is in active development, so future game updates may require rebuilt mods.
+These releases were tested with Inferno Protocol Steam build `25029929`, Unity `6000.4.11f1`, and Thunderstore's BepInEx IL2CPP pack `6.0.755`. Inferno Protocol is in active development, so future game updates may require rebuilt mods.
+
+## Thunderstore Mod Manager installation
+
+Install any of the mods from the Inferno Protocol community and launch the game with **Start modded**. Thunderstore installs both BepInEx and `InfernoProtocolInteropFix` as dependencies; the compatibility package repairs this game's generated Unity 6 interop metadata automatically before plugins load.
+
+Normal Steam launches remain unmodded as long as BepInEx is not installed directly in the game directory.
 
 Use the official [BepInEx IL2CPP installation guide](https://docs.bepinex.dev/master/articles/user_guide/installation/unity_il2cpp.html) and [BepInEx downloads](https://github.com/BepInEx/BepInEx/releases). Select a Windows x64 Unity IL2CPP package, not a Mono package.
 
@@ -43,6 +50,7 @@ After installation, the DLLs should be located at:
 BepInEx\plugins\BetterUI\InfernoProtocol.BetterUI.dll
 BepInEx\plugins\UtilityWheel\InfernoProtocol.UtilityWheel.dll
 BepInEx\plugins\BetterLights\InfernoProtocol.BetterLights.dll
+BepInEx\plugins\Renovator\InfernoProtocol.Renovator.dll
 ```
 
 Do not place the release ZIP itself in `BepInEx\plugins`. Extract it first.
@@ -96,13 +104,19 @@ BetterLights changes individual placed torch and environmental lantern colors. O
 - Mouse: press `F7` or middle mouse, drag on the wheel or click a preset, then click `Save`.
 - Use `L3` or the visible `Original` button to restore the original color; use `B`, `Escape`, or `Cancel` to discard a preview.
 
-In multiplayer, the host controls colors. Players with BetterLights 0.3.1 receive the host's current colors and later saved changes. Unmodded players remain compatible but see original colors.
+In multiplayer, the host controls colors. Players with the same BetterLights version receive the host's current colors and later saved changes. Unmodded players remain compatible but see original colors.
 
 Configuration is saved to:
 
 ```text
 BepInEx\config\com.holden.infernoprotocol.betterlights.cfg
 ```
+
+## Renovator
+
+Renovator adds native-style post-placement movement and rotation, precise alignment controls, refined hammer targeting, and 27 curated finishes for compatible walls, floors, ceilings, and roofs. It supports mouse, keyboard, and controller input. [Full Renovator details and controls](Renovator/README.md).
+
+Renovator currently operates in single-player and for the host. Surface finishes are not synchronized to other players.
 
 ## Uninstall
 
@@ -112,6 +126,7 @@ Close the game, then delete the corresponding plugin directory:
 BepInEx\plugins\BetterUI
 BepInEx\plugins\UtilityWheel
 BepInEx\plugins\BetterLights
+BepInEx\plugins\Renovator
 ```
 
 Deleting a config file is optional. BepInEx will recreate it with defaults if the mod is installed again.
@@ -127,14 +142,16 @@ Deleting a config file is optional. BepInEx will recreate it with defaults if th
 
 ### `Duplicate type with name '<>O'`
 
-Some BepInEx interop outputs for this Unity version can contain duplicate compiler-helper types. The source install script includes a narrow repair tool for the affected generated interop files and preserves backups beside them:
+Some BepInEx interop outputs for this Unity version contain duplicate compiler-helper types. Thunderstore installations receive `InfernoProtocolInteropFix` automatically. It runs before the plugin chainloader, repairs only the affected generated interop assemblies, and preserves one backup beside each changed file.
+
+For a manual source installation, the repository install script applies the same narrow repair:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\build-all.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 
-Only use that repair with the exact duplicate-type error. After a game or BepInEx update, allow BepInEx to regenerate its interop files before rebuilding the mods.
+After a game or BepInEx update, allow BepInEx to regenerate its interop files before rebuilding the mods.
 
 ## Build from source
 

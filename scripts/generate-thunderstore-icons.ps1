@@ -1,4 +1,4 @@
-param([switch]$ContentPlusOnly)
+param([switch]$ContentPlusOnly,[switch]$RenovatorOnly)
 $ErrorActionPreference = 'Stop'
 
 Add-Type -AssemblyName System.Drawing
@@ -200,6 +200,55 @@ function New-BetterLightsIcon {
     Save-Canvas -Canvas $canvas -Path $Path
 }
 
+function New-RenovatorIcon {
+    param([string]$Path)
+
+    $canvas = New-Canvas
+    $g = $canvas.Graphics
+    $outline = [System.Drawing.Pen]::new($bright, 7)
+    $line = [System.Drawing.Pen]::new($soft, 5)
+    $paper = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(255, 18, 57, 57))
+    $accent = [System.Drawing.Pen]::new($cyan, 7)
+    $house = [System.Drawing.Point[]]@(
+        [System.Drawing.Point]::new(39,112),
+        [System.Drawing.Point]::new(128,42),
+        [System.Drawing.Point]::new(217,112),
+        [System.Drawing.Point]::new(197,112),
+        [System.Drawing.Point]::new(197,211),
+        [System.Drawing.Point]::new(59,211),
+        [System.Drawing.Point]::new(59,112)
+    )
+    $g.FillPolygon($paper,$house)
+    $g.DrawLines($outline,$house)
+    $g.DrawLine($outline,39,112,128,42)
+    $g.DrawLine($outline,128,42,217,112)
+    $g.DrawLine($outline,59,211,197,211)
+
+    # Wallpapered window/panel gives the house a clear surface-finishing cue.
+    $g.DrawRectangle($outline,75,116,58,54)
+    $g.DrawLine($line,94,117,94,169)
+    $g.DrawLine($line,114,117,114,169)
+    $g.DrawLine($accent,79,140,94,125)
+    $g.DrawLine($accent,99,160,114,145)
+    $g.DrawLine($accent,118,137,129,126)
+
+    # Door plus a compact four-way move glyph communicates object placement.
+    $g.DrawRectangle($outline,151,135,27,76)
+    $g.DrawEllipse($accent,168,174,3,3)
+    $g.DrawLine($accent,103,190,139,190)
+    $g.DrawLine($accent,121,172,121,208)
+    $g.DrawLine($accent,103,190,112,181)
+    $g.DrawLine($accent,103,190,112,199)
+    $g.DrawLine($accent,139,190,130,181)
+    $g.DrawLine($accent,139,190,130,199)
+    $g.DrawLine($accent,121,172,112,181)
+    $g.DrawLine($accent,121,172,130,181)
+    $g.DrawLine($accent,121,208,112,199)
+    $g.DrawLine($accent,121,208,130,199)
+    $outline.Dispose(); $line.Dispose(); $paper.Dispose(); $accent.Dispose()
+    Save-Canvas -Canvas $canvas -Path $Path
+}
+
 if ($ContentPlusOnly) {
     $canvas = New-Canvas
     $g = $canvas.Graphics
@@ -225,6 +274,12 @@ if ($ContentPlusOnly) {
     $g.DrawLine($plus, 183, 163, 183, 201)
     $outline.Dispose(); $line.Dispose(); $paper.Dispose(); $badge.Dispose(); $plus.Dispose()
     Save-Canvas -Canvas $canvas -Path (Join-Path $repoRoot 'thunderstore\ContentPlus\icon.png')
+    return
+}
+if ($RenovatorOnly) {
+    $directory = Join-Path $repoRoot 'thunderstore\Renovator'
+    New-Item -ItemType Directory -Path $directory -Force | Out-Null
+    New-RenovatorIcon -Path (Join-Path $directory 'icon.png')
     return
 }
 New-BetterUiIcon -Path (Join-Path $repoRoot 'thunderstore\BetterUI\icon.png')

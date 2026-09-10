@@ -1,5 +1,21 @@
 # Changelog
 
+## Renovator 0.5.0 - 2026-09-10
+
+- Adds native-style post-placement movement, rotation, snapping, and precise alignment controls.
+- Adds 27 curated finishes for compatible walls, floors, ceilings, and roofs.
+- Replaces the Building Hammer's opaque target wash with a lightweight outline.
+- Includes mouse/controller UI, safe save handling, and a performance pass for large builds.
+
+## Thunderstore compatibility releases - 2026-09-04
+
+- Added `InfernoProtocolInteropFix` 1.0.0, an automatic preloader repair for malformed Unity 6 IL2CPP interop metadata.
+- Updated BetterUI to 0.9.6, Utility Wheel to 0.2.3, and BetterLights to 0.3.3 so Thunderstore installs the compatibility dependency automatically.
+
+## Utility Wheel 0.2.1 - 2026-09-03
+
+- Defers its activation while Artistic's editor is open, preventing competing controller overlays and input-map restoration conflicts.
+
 ## BetterLights 0.3.1 - 2026-09-03
 
 - Recolors lantern emissive material channels while preserving the lamp body's base texture.

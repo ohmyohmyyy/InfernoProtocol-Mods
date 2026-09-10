@@ -1,0 +1,6 @@
+bin/
+obj/
+backups/
+*.log
+pattern-preview.bmp
+pattern-preview.png
