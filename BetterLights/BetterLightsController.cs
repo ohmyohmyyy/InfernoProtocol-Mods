@@ -28,6 +28,7 @@ public sealed class BetterLightsController : MonoBehaviour
     private readonly List<LightTarget> _targets = new();
     private readonly List<LightTarget> _nearbyTargets = new();
     private readonly Dictionary<int, LightTarget> _targetsByRoot = new();
+    private readonly Dictionary<Vector2Int, List<LightTarget>> _spatialTargets = new();
     private readonly Dictionary<string, Color> _defaultColors = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Color> _networkColors = new(StringComparer.Ordinal);
     private readonly List<InputActionMap> _disabledMaps = new();
@@ -38,6 +39,7 @@ public sealed class BetterLightsController : MonoBehaviour
     private const string ColorMessage = "BetterLights.Color.v1";
     private const string AckMessage = "BetterLights.Ack.v1";
     private const byte SyncProtocol = 1;
+    private const float SpatialCellSize = 8f;
 
     private RectTransform _canvasRect;
     private RectTransform _promptRoot;
@@ -86,6 +88,7 @@ public sealed class BetterLightsController : MonoBehaviour
     private int _lastLoggedTargetCount = -1;
     private float _confirmationUntil;
     private string _confirmationText;
+    private float _promptAlpha;
     private NetworkManager _networkManager;
     private CustomMessagingManager _messaging;
     private CustomMessagingManager.HandleNamedMessageDelegate _helloHandler;
@@ -95,6 +98,7 @@ public sealed class BetterLightsController : MonoBehaviour
     private float _nextHelloAttempt;
     private bool _syncAcknowledged;
     private bool _networkFailureReported;
+    private bool _isRemoteClient;
 
     public BetterLightsController(IntPtr pointer) : base(pointer)
     {
@@ -135,7 +139,7 @@ public sealed class BetterLightsController : MonoBehaviour
         if (!CanTarget())
         {
             _target = null;
-            _promptGroup.alpha = 0f;
+            SetPromptAlpha(0f);
             return;
         }
 
@@ -154,12 +158,12 @@ public sealed class BetterLightsController : MonoBehaviour
 
         if (_target == null)
         {
-            _promptGroup.alpha = 0f;
+            SetPromptAlpha(0f);
             return;
         }
 
         PositionPrompt(_target);
-        _promptGroup.alpha = Mathf.MoveTowards(_promptGroup.alpha, 1f, Time.unscaledDeltaTime * 10f);
+        SetPromptAlpha(Mathf.MoveTowards(_promptAlpha, 1f, Time.unscaledDeltaTime * 10f));
         if (TryGetActivation(out bool mouseMode))
         {
             OpenPicker(mouseMode);
@@ -191,6 +195,7 @@ public sealed class BetterLightsController : MonoBehaviour
         _targets.Clear();
         _nearbyTargets.Clear();
         _targetsByRoot.Clear();
+        _spatialTargets.Clear();
         APlacable[] found = UnityEngine.Object.FindObjectsOfType<APlacable>(true);
         for (int i = 0; found != null && i < found.Length; i++)
         {
@@ -231,12 +236,13 @@ public sealed class BetterLightsController : MonoBehaviour
         if (_targetsByRoot.ContainsKey(rootId)) return false;
         _targetsByRoot.Add(rootId, target);
         _targets.Add(target);
+        IndexTarget(target);
         if (_networkColors.TryGetValue(target.Key, out Color networkColor))
         {
             RememberDefaultColor(target);
             TorchColorService.Apply(target, networkColor);
         }
-        else if (!IsRemoteClient() && BetterLightsPlugin.TryGetTorchColor(target.Key, out Color savedColor))
+        else if (!_isRemoteClient && BetterLightsPlugin.TryGetTorchColor(target.Key, out Color savedColor))
         {
             RememberDefaultColor(target);
             TorchColorService.Apply(target, savedColor);
@@ -257,13 +263,50 @@ public sealed class BetterLightsController : MonoBehaviour
         Vector3 origin = camera.transform.position;
         float radius = BetterLightsPlugin.InteractionRange.Value + 1.5f;
         float radiusSquared = radius * radius;
-        for (int i = 0; i < _targets.Count; i++)
+        Vector2Int center = GetSpatialCell(origin);
+        int cellRadius = Mathf.Max(1, Mathf.CeilToInt(radius / SpatialCellSize));
+        for (int x = center.x - cellRadius; x <= center.x + cellRadius; x++)
         {
-            LightTarget target = _targets[i];
-            if (target == null || !target.IsValid) continue;
-            Vector3 offset = TorchColorService.GetVisualPosition(target) - origin;
-            if (offset.sqrMagnitude <= radiusSquared) _nearbyTargets.Add(target);
+            for (int y = center.y - cellRadius; y <= center.y + cellRadius; y++)
+            {
+                if (!_spatialTargets.TryGetValue(new Vector2Int(x, y), out List<LightTarget> cellTargets)) continue;
+                for (int i = 0; i < cellTargets.Count; i++)
+                {
+                    LightTarget target = cellTargets[i];
+                    if (!TryGetTargetPosition(target, out Vector3 position)) continue;
+                    if ((position - origin).sqrMagnitude <= radiusSquared) _nearbyTargets.Add(target);
+                }
+            }
         }
+    }
+
+    private void IndexTarget(LightTarget target)
+    {
+        if (!TryGetTargetPosition(target, out Vector3 position)) return;
+        Vector2Int cell = GetSpatialCell(position);
+        if (!_spatialTargets.TryGetValue(cell, out List<LightTarget> cellTargets))
+        {
+            cellTargets = new List<LightTarget>();
+            _spatialTargets.Add(cell, cellTargets);
+        }
+        cellTargets.Add(target);
+    }
+
+    private static Vector2Int GetSpatialCell(Vector3 position)
+    {
+        return new Vector2Int(
+            Mathf.FloorToInt(position.x / SpatialCellSize),
+            Mathf.FloorToInt(position.z / SpatialCellSize));
+    }
+
+    private static bool TryGetTargetPosition(LightTarget target, out Vector3 position)
+    {
+        position = Vector3.zero;
+        if (target?.Root == null) return false;
+        GameObject rootObject = target.Root.gameObject;
+        if (rootObject == null || !rootObject.activeInHierarchy) return false;
+        position = target.Visual != null ? target.Visual.position : target.Root.position + (Vector3.up * 0.45f);
+        return true;
     }
 
     private LightTarget FindTarget()
@@ -293,18 +336,18 @@ public sealed class BetterLightsController : MonoBehaviour
             {
                 AddTarget(direct);
                 best = direct;
-                bestScore = Vector3.Distance(camera.transform.position, TorchColorService.GetVisualPosition(best));
+                if (TryGetTargetPosition(best, out Vector3 directPosition))
+                    bestScore = Vector3.Distance(camera.transform.position, directPosition);
             }
         }
         for (int i = 0; i < _nearbyTargets.Count; i++)
         {
             LightTarget target = _nearbyTargets[i];
-            if (target == null || !target.IsValid)
+            if (!TryGetTargetPosition(target, out Vector3 position))
             {
                 continue;
             }
 
-            Vector3 position = TorchColorService.GetVisualPosition(target);
             Vector3 offset = position - camera.transform.position;
             float distance = offset.magnitude;
             if (distance <= 0.01f || distance > maximumDistance)
@@ -384,7 +427,7 @@ public sealed class BetterLightsController : MonoBehaviour
         _mouseMode = false;
         _mouseDraggingWheel = false;
         _open = true;
-        _promptGroup.alpha = 0f;
+        SetPromptAlpha(0f);
         _pickerRoot.gameObject.SetActive(true);
         _pickerGroup.alpha = 1f;
         PositionPicker(_target);
@@ -798,9 +841,8 @@ public sealed class BetterLightsController : MonoBehaviour
     {
         try
         {
-            return !IsRemoteClient() && Player.isLocalPlayerLoaded && Player.localPlayer != null && Player.mainCamera != null &&
-                   !Cursor.visible && !PlayerInventoryUI.isOpen && !SkillWheelManager.isOpen &&
-                   GameObject.Find("Renovator_InputBlocker") == null;
+            return !_isRemoteClient && Player.isLocalPlayerLoaded && Player.localPlayer != null && Player.mainCamera != null &&
+                   !Cursor.visible && !PlayerInventoryUI.isOpen && !SkillWheelManager.isOpen;
         }
         catch
         {
@@ -812,8 +854,7 @@ public sealed class BetterLightsController : MonoBehaviour
     {
         try
         {
-            return Player.localPlayer != null && !PlayerInventoryUI.isOpen &&
-                   GameObject.Find("Renovator_InputBlocker") == null;
+            return Player.localPlayer != null && !PlayerInventoryUI.isOpen;
         }
         catch
         {
@@ -894,7 +935,8 @@ public sealed class BetterLightsController : MonoBehaviour
             NetworkManager manager = NetworkManager.Singleton;
             if (manager == null || !manager.IsListening || manager.CustomMessagingManager == null)
             {
-                ResetNetworkSync();
+                if (_networkManager != null || _messaging != null) ResetNetworkSync();
+                else _isRemoteClient = false;
                 return;
             }
 
@@ -915,6 +957,8 @@ public sealed class BetterLightsController : MonoBehaviour
                 _networkFailureReported = false;
                 BetterLightsPlugin.ModLog.LogInfo("BetterLights multiplayer color sync layer ready.");
             }
+
+            _isRemoteClient = manager.IsClient && !manager.IsServer;
 
             if (manager.IsClient && !manager.IsServer && manager.IsConnectedClient &&
                 !_syncAcknowledged && now >= _nextHelloAttempt)
@@ -1130,19 +1174,6 @@ public sealed class BetterLightsController : MonoBehaviour
         return applied;
     }
 
-    private bool IsRemoteClient()
-    {
-        try
-        {
-            NetworkManager manager = NetworkManager.Singleton;
-            return manager != null && manager.IsListening && manager.IsClient && !manager.IsServer;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
     private void ResetNetworkSync()
     {
         if (_messaging != null)
@@ -1171,11 +1202,13 @@ public sealed class BetterLightsController : MonoBehaviour
         _targets.Clear();
         _nearbyTargets.Clear();
         _targetsByRoot.Clear();
+        _spatialTargets.Clear();
         _worldRegistryReady = false;
         _stableWorldScans = 0;
         _lastWorldTargetCount = -1;
         _nextWorldScan = 0f;
         _nextNearbyScan = 0f;
+        _isRemoteClient = false;
         if (_networkColors.Count > 0)
         {
             _networkColors.Clear();
@@ -1211,6 +1244,7 @@ public sealed class BetterLightsController : MonoBehaviour
         promptOutline.useGraphicAlpha = true;
         _promptGroup = _promptPanel.gameObject.AddComponent<CanvasGroup>();
         _promptGroup.alpha = 0f;
+        _promptAlpha = 0f;
         _promptGroup.interactable = false;
         _promptGroup.blocksRaycasts = false;
 
@@ -1287,13 +1321,21 @@ public sealed class BetterLightsController : MonoBehaviour
     {
         if (_promptGroup != null)
         {
-            _promptGroup.alpha = 0f;
+            SetPromptAlpha(0f);
         }
 
         if (_pickerRoot != null)
         {
             _pickerRoot.gameObject.SetActive(false);
         }
+    }
+
+    private void SetPromptAlpha(float alpha)
+    {
+        alpha = Mathf.Clamp01(alpha);
+        if (_promptGroup == null || Mathf.Approximately(_promptAlpha, alpha)) return;
+        _promptAlpha = alpha;
+        _promptGroup.alpha = alpha;
     }
 
     private Image CreateActionButton(string name, Transform parent, string label, float x)

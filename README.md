@@ -8,7 +8,7 @@ Independent gameplay and quality-of-life mods for [Inferno Protocol on Steam](ht
 | --- | --- | --- | --- |
 | BetterUI | 0.11.0 | Polishes crafting and building, displays exact hotbar durability, and presents genetics as an interactive DNA tree. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/BetterUI/) |
 | Utility Wheel | 0.2.3 | Adds a translucent controller radial menu for occupied hotbar slots. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/UtilityWheel/) |
-| BetterLights | 0.3.5 | Customizes individual torch and lantern colors with controller and mouse support. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/BetterLights/) |
+| BetterLights | 0.3.6 | Customizes individual torch and lantern colors with controller and mouse support. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/BetterLights/) |
 | [ContentPlus](FieldQuests/README.md) | 0.5.1 | Adds a quest board, XP progression and twelve unlockable equipment finishes. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/ContentPlus/) |
 | [Renovator](Renovator/README.md) | 0.6.0 | Moves and aligns placed objects, applies curated finishes, and synchronizes committed renovations in multiplayer. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/Renovator/) |
 

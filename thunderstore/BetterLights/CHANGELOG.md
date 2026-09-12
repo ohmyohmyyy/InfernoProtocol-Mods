@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.6
+
+- Performance improvement.
+
 ## 0.3.5
 
 - Removed recurring full-world light scans and optimized nearby targeting.

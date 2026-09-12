@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Game.LevelOperations;
 using UnityEngine;
 
@@ -58,13 +59,17 @@ internal static class TorchColorService
             },
             HasFlame = true
         };
-        Light[] lights = target.Root.GetComponentsInChildren<Light>(true);
-        if (lights != null && lights.Length > 0 && lights[0] != null) target.Visual = lights[0].transform;
+        target.Lights = target.Root.GetComponentsInChildren<Light>(true);
+        if (target.Lights != null && target.Lights.Length > 0 && target.Lights[0] != null)
+        {
+            target.PrimaryLight = target.Lights[0];
+            target.Visual = target.PrimaryLight.transform;
+        }
         if (target.Visual == null)
         {
-            ParticleSystem[] particles = target.Root.GetComponentsInChildren<ParticleSystem>(true);
-            for (int i = 0; particles != null && i < particles.Length; i++)
-                if (particles[i] != null && !IsSmoke(particles[i].gameObject.name)) { target.Visual = particles[i].transform; break; }
+            target.Particles = target.Root.GetComponentsInChildren<ParticleSystem>(true);
+            for (int i = 0; target.Particles != null && i < target.Particles.Length; i++)
+                if (target.Particles[i] != null && !IsSmoke(target.Particles[i].gameObject.name)) { target.Visual = target.Particles[i].transform; break; }
         }
         return target;
     }
@@ -88,6 +93,7 @@ internal static class TorchColorService
         {
             Root = root,
             Visual = light.transform,
+            PrimaryLight = light,
             // Keep the original named-light position as the persistent identity
             // even when Root expands upward to include the lantern mesh.
             Key = BetterLightsPlugin.GetSceneLightKey("Lantern", identity != null ? identity : root),
@@ -113,20 +119,27 @@ internal static class TorchColorService
             return target != null && !target.HasFlame ? NaturalLantern : NaturalFire;
         }
 
-        Light[] lights = target.Root.GetComponentsInChildren<Light>(true);
+        Light primary = target.PrimaryLight;
+        if (primary != null)
+        {
+            Color color = primary.color;
+            color.a = 1f;
+            return color;
+        }
+
+        Light[] lights = GetLights(target);
         for (int i = 0; lights != null && i < lights.Length; i++)
         {
-            if (lights[i] != null)
-            {
-                Color color = lights[i].color;
-                color.a = 1f;
-                return color;
-            }
+            if (lights[i] == null) continue;
+            target.PrimaryLight = lights[i];
+            Color color = lights[i].color;
+            color.a = 1f;
+            return color;
         }
 
         if (target.HasFlame)
         {
-            ParticleSystem[] particles = target.Root.GetComponentsInChildren<ParticleSystem>(true);
+            ParticleSystem[] particles = GetParticles(target);
             for (int i = 0; particles != null && i < particles.Length; i++)
             {
                 if (particles[i] == null || IsSmoke(particles[i].gameObject.name))
@@ -159,7 +172,7 @@ internal static class TorchColorService
 
         color.a = 1f;
         int changed = 0;
-        Light[] lights = target.Root.GetComponentsInChildren<Light>(true);
+        Light[] lights = GetLights(target);
         for (int i = 0; lights != null && i < lights.Length; i++)
         {
             Light light = lights[i];
@@ -174,17 +187,17 @@ internal static class TorchColorService
 
         if (target.HasFlame)
         {
-            changed += ApplyFlameColor(target.Root, color);
+            changed += ApplyFlameColor(target, color);
         }
 
-        changed += ApplyEmissionColor(target.Root, color, target.HasFlame);
+        changed += ApplyEmissionColor(target, color);
         return changed;
     }
 
-    private static int ApplyFlameColor(Transform root, Color color)
+    private static int ApplyFlameColor(LightTarget target, Color color)
     {
         int changed = 0;
-        ParticleSystem[] particles = root.GetComponentsInChildren<ParticleSystem>(true);
+        ParticleSystem[] particles = GetParticles(target);
         for (int i = 0; particles != null && i < particles.Length; i++)
         {
             ParticleSystem particle = particles[i];
@@ -208,7 +221,7 @@ internal static class TorchColorService
             }
         }
 
-        CompositeTorch[] compositeTorches = root.GetComponentsInChildren<CompositeTorch>(true);
+        CompositeTorch[] compositeTorches = target.CompositeTorches ??= target.Root.GetComponentsInChildren<CompositeTorch>(true);
         for (int i = 0; compositeTorches != null && i < compositeTorches.Length; i++)
         {
             CompositeTorch composite = compositeTorches[i];
@@ -224,48 +237,79 @@ internal static class TorchColorService
         return changed;
     }
 
-    private static int ApplyEmissionColor(Transform root, Color color, bool hasFlame)
+    private static int ApplyEmissionColor(LightTarget target, Color color)
     {
         int changed = 0;
-        Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
-        for (int i = 0; renderers != null && i < renderers.Length; i++)
+        Material[] materials = GetEmissionMaterials(target);
+        for (int i = 0; materials != null && i < materials.Length; i++)
         {
-            Renderer renderer = renderers[i];
-            if (renderer == null || IsSmoke(renderer.gameObject.name))
+            Material material = materials[i];
+            if (material == null)
             {
                 continue;
             }
 
             try
             {
-                if (hasFlame)
+                if (target.HasFlame)
                 {
-                    Material flameMaterial = renderer.material;
-                    if (flameMaterial != null && ApplyFlameMaterialColor(flameMaterial, color))
+                    if (ApplyFlameMaterialColor(material, color))
                     {
                         changed++;
                     }
-
-                    continue;
                 }
-
-                var materials = renderer.materials;
-                for (int materialIndex = 0; materials != null && materialIndex < materials.Length; materialIndex++)
+                else if (ApplyLanternEmissionColor(material, color))
                 {
-                    Material material = materials[materialIndex];
-                    if (material != null && ApplyLanternEmissionColor(material, color))
-                    {
-                        changed++;
-                    }
+                    changed++;
                 }
             }
             catch (Exception exception)
             {
-                BetterLightsPlugin.ModLog.LogDebug($"Could not tint renderer {renderer.gameObject.name}: {exception.Message}");
+                BetterLightsPlugin.ModLog.LogDebug($"Could not tint emissive material: {exception.Message}");
             }
         }
 
         return changed;
+    }
+
+    private static Light[] GetLights(LightTarget target)
+    {
+        return target.Lights ??= target.Root.GetComponentsInChildren<Light>(true);
+    }
+
+    private static ParticleSystem[] GetParticles(LightTarget target)
+    {
+        return target.Particles ??= target.Root.GetComponentsInChildren<ParticleSystem>(true);
+    }
+
+    private static Material[] GetEmissionMaterials(LightTarget target)
+    {
+        if (target.EmissionMaterials != null) return target.EmissionMaterials;
+
+        target.Renderers ??= target.Root.GetComponentsInChildren<Renderer>(true);
+        List<Material> materials = new();
+        for (int i = 0; target.Renderers != null && i < target.Renderers.Length; i++)
+        {
+            Renderer renderer = target.Renderers[i];
+            if (renderer == null || IsSmoke(renderer.gameObject.name)) continue;
+
+            if (target.HasFlame)
+            {
+                Material material = renderer.material;
+                if (material != null) materials.Add(material);
+                continue;
+            }
+
+            Material[] rendererMaterials = renderer.materials;
+            for (int materialIndex = 0; rendererMaterials != null && materialIndex < rendererMaterials.Length; materialIndex++)
+            {
+                Material material = rendererMaterials[materialIndex];
+                if (material != null) materials.Add(material);
+            }
+        }
+
+        target.EmissionMaterials = materials.ToArray();
+        return target.EmissionMaterials;
     }
 
     private static bool ApplyLanternEmissionColor(Material material, Color color)
