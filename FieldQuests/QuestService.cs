@@ -20,6 +20,8 @@ internal sealed class QuestService
     private string _saveFile;
     private bool _faulted;
     private readonly HashSet<int> _deaths = new();
+    private readonly Dictionary<int, ulong> _lastAttackers = new();
+    private readonly Dictionary<int, ulong> _pendingAttackers = new();
     private static Dictionary<string, string> _unavailable = new();
     internal bool Ready => _saveFile != null && !_faulted;
     internal void Load()
@@ -53,16 +55,86 @@ internal sealed class QuestService
         if (!_players.TryGetValue(key, out Progress p)) _players.Add(key, p = new Progress());
         return p;
     }
-    internal void Respawn(ANPC npc) => _deaths.Remove(npc.GetInstanceID());
+    internal void Respawn(ANPC npc)
+    {
+        int instanceId = npc.GetInstanceID();
+        _deaths.Remove(instanceId);
+        _lastAttackers.Remove(instanceId);
+        _pendingAttackers.Remove(instanceId);
+    }
+    internal void BeginDamage(ANPC npc, ulong causerId)
+    {
+        if (!Ready || npc == null || !npc.IsServer) return;
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || !manager.IsListening || !manager.IsServer ||
+            !manager.ConnectedClients.TryGetValue(causerId, out NetworkClient client) || client?.PlayerObject == null) return;
+        int instanceId = npc.GetInstanceID();
+        _pendingAttackers[instanceId] = causerId;
+        // Host/solo damage originates inside this process and does not always take
+        // the remote-client validation path. Its connected local client ID is
+        // already authoritative, so retain it beyond the DamageServer call.
+        if (causerId == manager.LocalClientId) _lastAttackers[instanceId] = causerId;
+    }
+    internal void ValidateDamage(ANPC npc, ulong causerId, bool accepted)
+    {
+        if (!Ready || npc == null || !npc.IsServer) return;
+        int instanceId = npc.GetInstanceID();
+        if (accepted)
+        {
+            BeginDamage(npc, causerId);
+            if (_pendingAttackers.TryGetValue(instanceId, out ulong pending) && pending == causerId)
+                _lastAttackers[instanceId] = causerId;
+        }
+        else if (_pendingAttackers.TryGetValue(instanceId, out ulong pending) && pending == causerId)
+        {
+            _pendingAttackers.Remove(instanceId);
+        }
+    }
+    internal void EndDamage(ANPC npc, ulong causerId)
+    {
+        if (npc == null) return;
+        int instanceId = npc.GetInstanceID();
+        if (_pendingAttackers.TryGetValue(instanceId, out ulong pending) && pending == causerId)
+            _pendingAttackers.Remove(instanceId);
+    }
     internal void Death(ANPC npc, DamageData damage)
     {
-        if (!Ready || !npc.IsServer || _deaths.Contains(npc.GetInstanceID())) return;
-        if (!damage.source.TryGet(out NetworkBehaviour source, NetworkManager.Singleton)) return;
+        int instanceId = npc.GetInstanceID();
+        if (!Ready || !npc.IsServer || _deaths.Contains(instanceId)) return;
+        Player player = ResolveDamageSource(damage);
+        if (player == null && _lastAttackers.TryGetValue(instanceId, out ulong causerId))
+            player = ResolveClientPlayer(causerId);
+        if (player == null && _pendingAttackers.TryGetValue(instanceId, out causerId))
+            player = ResolveClientPlayer(causerId);
+        if (player == null || !player.IsSpawned || !HasPersistentIdentity(player)) return;
+        _deaths.Add(instanceId);
+        _lastAttackers.Remove(instanceId);
+        _pendingAttackers.Remove(instanceId);
+        string creature = npc.npcId.ToString();
+        Progress progress = Get(player);
+        bool tracked = QuestCatalog.All.Any(q => q.Hunt && q.Target == creature && progress.Active.ContainsKey(q.Id));
+        progress.Kill(creature);
+        if (tracked) QuestPlugin.LogSource.LogInfo($"Quest kill credited: {creature} to client {player.OwnerClientId}.");
+    }
+    private static Player ResolveDamageSource(DamageData damage)
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || !damage.source.TryGet(out NetworkBehaviour source, manager) || source == null) return null;
         Player player = source.TryCast<Player>();
         if (player == null) player = source.GetComponentInParent<Player>();
-        if (player == null || !player.IsSpawned || !HasPersistentIdentity(player)) return;
-        _deaths.Add(npc.GetInstanceID());
-        Get(player).Kill(npc.npcId.ToString());
+        if (player == null && source.NetworkObject != null) player = ResolveClientPlayer(source.NetworkObject.OwnerClientId);
+        return player;
+    }
+    private static Player ResolveClientPlayer(ulong clientId)
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || !manager.ConnectedClients.TryGetValue(clientId, out NetworkClient client) || client?.PlayerObject == null)
+            return null;
+        Player player = client.PlayerObject.GetComponent<Player>();
+        if (player != null) return player;
+        foreach (Player candidate in UnityEngine.Object.FindObjectsOfType<Player>())
+            if (candidate != null && candidate.IsSpawned && candidate.OwnerClientId == clientId) return candidate;
+        return null;
     }
     internal QuestView Execute(Player player, string verb, string id, Vector3 npcPosition)
     {

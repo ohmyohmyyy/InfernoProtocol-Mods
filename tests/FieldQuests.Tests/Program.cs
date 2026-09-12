@@ -359,6 +359,10 @@ Test("Required owner, spawn, save, death and inventory adapters exist", () =>
         ("Game.LevelOperations.ItemStash", "allStashes"), ("SaveSystem.SaveManager", "onSaveComplete") })
         Check(types[pair.Item1].Properties.Any(p => p.Name == pair.Item2), "Missing game property " + pair);
     Check(types["Game.AI.ANPC"].Methods.Any(m => m.Name == "OnDeathServer_InternalServer" && m.MethodSig.Params.Count == 1 && m.MethodSig.Params[0].FullName == "Game.Combat.DamageData&"), "Kill hook signature mismatch");
+    Check(types["ANetworkEntity"].Methods.Any(m => m.Name == "DamageServer" && m.MethodSig.Params.Count == 2 &&
+        m.MethodSig.Params[0].FullName == "Game.Combat.DamageData&" && m.MethodSig.Params[1].FullName == "System.UInt64"), "Server damage attribution hook mismatch");
+    Check(types["ANetworkEntity"].Methods.Any(m => m.Name == "ValidateDamageRequestOnServerSide" && m.MethodSig.RetType.FullName == "System.Boolean" &&
+        m.MethodSig.Params.Count == 2 && m.MethodSig.Params[0].FullName == "Game.Combat.DamageData&" && m.MethodSig.Params[1].FullName == "System.UInt64"), "Validated damage attribution hook mismatch");
     Check(types["Game.Combat.DamageData"].Fields.Any(f => f.Name == "source"), "No damage attribution");
 });
 Test("Compiled quest giver uses a static board with no character rig or clone path", () =>

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1 - ContentPlus
+
+- Fixed creature kills not counting toward hunt quests.
+
 ## 0.5.0 - ContentPlus
 
 - Rename the public mod to ContentPlus; retain legacy plugin/save identifiers for compatibility.

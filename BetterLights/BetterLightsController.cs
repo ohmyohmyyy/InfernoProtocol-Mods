@@ -34,6 +34,8 @@ public sealed class BetterLightsController : MonoBehaviour
 
     private const string HelloMessage = "BetterLights.Hello.v1";
     private const string ColorMessage = "BetterLights.Color.v1";
+    private const string AckMessage = "BetterLights.Ack.v1";
+    private const byte SyncProtocol = 1;
 
     private RectTransform _canvasRect;
     private RectTransform _promptRoot;
@@ -82,8 +84,10 @@ public sealed class BetterLightsController : MonoBehaviour
     private CustomMessagingManager _messaging;
     private CustomMessagingManager.HandleNamedMessageDelegate _helloHandler;
     private CustomMessagingManager.HandleNamedMessageDelegate _colorHandler;
+    private CustomMessagingManager.HandleNamedMessageDelegate _ackHandler;
     private float _nextNetworkCheck;
-    private bool _helloSent;
+    private float _nextHelloAttempt;
+    private bool _syncAcknowledged;
     private bool _networkFailureReported;
 
     public BetterLightsController(IntPtr pointer) : base(pointer)
@@ -109,6 +113,7 @@ public sealed class BetterLightsController : MonoBehaviour
         }
 
         UpdateNetworkSync();
+        UpdateLightRegistry();
 
         if (_open)
         {
@@ -129,12 +134,6 @@ public sealed class BetterLightsController : MonoBehaviour
         }
 
         float now = Time.unscaledTime;
-        if (now >= _nextTorchScan)
-        {
-            _nextTorchScan = now + 2f;
-            RefreshTorches();
-        }
-
         if (now >= _nextTargetScan)
         {
             _nextTargetScan = now + 0.14f;
@@ -154,6 +153,14 @@ public sealed class BetterLightsController : MonoBehaviour
         {
             OpenPicker(mouseMode);
         }
+    }
+
+    private void UpdateLightRegistry()
+    {
+        float now = Time.unscaledTime;
+        if (now < _nextTorchScan) return;
+        _nextTorchScan = now + 2f;
+        RefreshTorches();
     }
 
     private void RefreshTorches()
@@ -728,7 +735,8 @@ public sealed class BetterLightsController : MonoBehaviour
         try
         {
             return !IsRemoteClient() && Player.isLocalPlayerLoaded && Player.localPlayer != null && Player.mainCamera != null &&
-                   !Cursor.visible && !PlayerInventoryUI.isOpen && !SkillWheelManager.isOpen;
+                   !Cursor.visible && !PlayerInventoryUI.isOpen && !SkillWheelManager.isOpen &&
+                   GameObject.Find("Renovator_InputBlocker") == null;
         }
         catch
         {
@@ -740,7 +748,8 @@ public sealed class BetterLightsController : MonoBehaviour
     {
         try
         {
-            return Player.localPlayer != null && !PlayerInventoryUI.isOpen;
+            return Player.localPlayer != null && !PlayerInventoryUI.isOpen &&
+                   GameObject.Find("Renovator_InputBlocker") == null;
         }
         catch
         {
@@ -834,13 +843,17 @@ public sealed class BetterLightsController : MonoBehaviour
                     new Action<ulong, FastBufferReader>(OnHelloMessage));
                 _colorHandler = DelegateSupport.ConvertDelegate<CustomMessagingManager.HandleNamedMessageDelegate>(
                     new Action<ulong, FastBufferReader>(OnColorMessage));
+                _ackHandler = DelegateSupport.ConvertDelegate<CustomMessagingManager.HandleNamedMessageDelegate>(
+                    new Action<ulong, FastBufferReader>(OnAckMessage));
                 _messaging.RegisterNamedMessageHandler(HelloMessage, _helloHandler);
                 _messaging.RegisterNamedMessageHandler(ColorMessage, _colorHandler);
+                _messaging.RegisterNamedMessageHandler(AckMessage, _ackHandler);
                 _networkFailureReported = false;
                 BetterLightsPlugin.ModLog.LogInfo("BetterLights multiplayer color sync layer ready.");
             }
 
-            if (manager.IsClient && !manager.IsServer && !_helloSent)
+            if (manager.IsClient && !manager.IsServer && manager.IsConnectedClient &&
+                !_syncAcknowledged && now >= _nextHelloAttempt)
             {
                 SendHello();
             }
@@ -865,12 +878,13 @@ public sealed class BetterLightsController : MonoBehaviour
         FastBufferWriter writer = new(1, Allocator.Temp, 1);
         try
         {
+            writer.WriteByte(SyncProtocol);
             _messaging.SendNamedMessage(
                 HelloMessage,
                 NetworkManager.ServerClientId,
                 writer,
                 NetworkDelivery.ReliableSequenced);
-            _helloSent = true;
+            _nextHelloAttempt = Time.unscaledTime + 2f;
         }
         finally
         {
@@ -885,6 +899,11 @@ public sealed class BetterLightsController : MonoBehaviour
             return;
         }
 
+        if (reader.Length < 1) return;
+        reader.ReadByte(out byte protocol);
+        if (protocol != SyncProtocol) return;
+
+        SendAck(senderClientId);
         if (_compatibleClients.Add(senderClientId))
         {
             BetterLightsPlugin.ModLog.LogInfo($"BetterLights client {senderClientId} joined light color sync.");
@@ -898,6 +917,31 @@ public sealed class BetterLightsController : MonoBehaviour
         {
             _pendingSnapshotClients.Add(senderClientId);
         }
+    }
+
+    private void SendAck(ulong clientId)
+    {
+        if (_messaging == null) return;
+        FastBufferWriter writer = new(1, Allocator.Temp, 1);
+        try
+        {
+            writer.WriteByte(SyncProtocol);
+            _messaging.SendNamedMessage(AckMessage, clientId, writer, NetworkDelivery.ReliableSequenced);
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
+
+    private void OnAckMessage(ulong senderClientId, FastBufferReader reader)
+    {
+        if (_networkManager == null || !_networkManager.IsClient || _networkManager.IsServer ||
+            senderClientId != NetworkManager.ServerClientId || reader.Length < 1) return;
+        reader.ReadByte(out byte protocol);
+        if (protocol != SyncProtocol || _syncAcknowledged) return;
+        _syncAcknowledged = true;
+        BetterLightsPlugin.ModLog.LogInfo("Connected to host BetterLights color sync.");
     }
 
     private void OnColorMessage(ulong senderClientId, FastBufferReader reader)
@@ -1033,6 +1077,7 @@ public sealed class BetterLightsController : MonoBehaviour
             {
                 _messaging.UnregisterNamedMessageHandler(HelloMessage);
                 _messaging.UnregisterNamedMessageHandler(ColorMessage);
+                _messaging.UnregisterNamedMessageHandler(AckMessage);
             }
             catch
             {
@@ -1044,7 +1089,9 @@ public sealed class BetterLightsController : MonoBehaviour
         _messaging = null;
         _helloHandler = null;
         _colorHandler = null;
-        _helloSent = false;
+        _ackHandler = null;
+        _nextHelloAttempt = 0f;
+        _syncAcknowledged = false;
         _compatibleClients.Clear();
         _pendingSnapshotClients.Clear();
         if (_networkColors.Count > 0)

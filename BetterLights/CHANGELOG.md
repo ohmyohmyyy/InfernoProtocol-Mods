@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.4 - 2026-09-12
+
+- Fixed host light colors not syncing to joined players.
+
 ## 0.3.1 - 2026-09-03
 
 - Expands lantern targets from the light child to the complete visual object so their mesh renderers are included.
