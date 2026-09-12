@@ -6,6 +6,7 @@ internal sealed class LightTarget
 {
     internal APlacable Placable;
     internal Transform Root;
+    internal Transform Visual;
     internal string Key;
     internal string Name;
     internal bool HasFlame;

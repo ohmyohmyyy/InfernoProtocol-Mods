@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.5 - 2026-09-12
+
+- Removed recurring full-world light scans and optimized nearby targeting.
+
 ## 0.3.4 - 2026-09-12
 
 - Fixed host light colors not syncing to joined players.

@@ -45,7 +45,7 @@ internal static class TorchColorService
             return null;
         }
 
-        return new LightTarget
+        LightTarget target = new()
         {
             Placable = placable,
             Root = placable.transform,
@@ -58,6 +58,15 @@ internal static class TorchColorService
             },
             HasFlame = true
         };
+        Light[] lights = target.Root.GetComponentsInChildren<Light>(true);
+        if (lights != null && lights.Length > 0 && lights[0] != null) target.Visual = lights[0].transform;
+        if (target.Visual == null)
+        {
+            ParticleSystem[] particles = target.Root.GetComponentsInChildren<ParticleSystem>(true);
+            for (int i = 0; particles != null && i < particles.Length; i++)
+                if (particles[i] != null && !IsSmoke(particles[i].gameObject.name)) { target.Visual = particles[i].transform; break; }
+        }
+        return target;
     }
 
     internal static LightTarget CreateLanternTarget(Light light)
@@ -78,6 +87,7 @@ internal static class TorchColorService
         return new LightTarget
         {
             Root = root,
+            Visual = light.transform,
             // Keep the original named-light position as the persistent identity
             // even when Root expands upward to include the lantern mesh.
             Key = BetterLightsPlugin.GetSceneLightKey("Lantern", identity != null ? identity : root),
@@ -93,22 +103,7 @@ internal static class TorchColorService
             return Vector3.zero;
         }
 
-        Light[] lights = target.Root.GetComponentsInChildren<Light>(true);
-        if (lights != null && lights.Length > 0 && lights[0] != null)
-        {
-            return lights[0].transform.position;
-        }
-
-        if (target.HasFlame)
-        {
-            ParticleSystem[] particles = target.Root.GetComponentsInChildren<ParticleSystem>(true);
-            if (particles != null && particles.Length > 0 && particles[0] != null)
-            {
-                return particles[0].transform.position;
-            }
-        }
-
-        return target.Root.position + (Vector3.up * 0.45f);
+        return target.Visual != null ? target.Visual.position : target.Root.position + (Vector3.up * 0.45f);
     }
 
     internal static Color ReadColor(LightTarget target)

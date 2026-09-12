@@ -26,6 +26,8 @@ public sealed class BetterLightsController : MonoBehaviour
     };
 
     private readonly List<LightTarget> _targets = new();
+    private readonly List<LightTarget> _nearbyTargets = new();
+    private readonly Dictionary<int, LightTarget> _targetsByRoot = new();
     private readonly Dictionary<string, Color> _defaultColors = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Color> _networkColors = new(StringComparer.Ordinal);
     private readonly List<InputActionMap> _disabledMaps = new();
@@ -66,8 +68,12 @@ public sealed class BetterLightsController : MonoBehaviour
     private Color _originalColor;
     private float _hue;
     private float _saturation;
-    private float _nextTorchScan;
+    private float _nextWorldScan;
+    private float _nextNearbyScan;
     private float _nextTargetScan;
+    private int _lastWorldTargetCount = -1;
+    private int _stableWorldScans;
+    private bool _worldRegistryReady;
     private bool _built;
     private bool _open;
     private bool _resetPending;
@@ -134,6 +140,11 @@ public sealed class BetterLightsController : MonoBehaviour
         }
 
         float now = Time.unscaledTime;
+        if (now >= _nextNearbyScan)
+        {
+            _nextNearbyScan = now + 0.45f;
+            RefreshNearbyTargets();
+        }
         if (now >= _nextTargetScan)
         {
             _nextTargetScan = now + 0.14f;
@@ -157,16 +168,29 @@ public sealed class BetterLightsController : MonoBehaviour
 
     private void UpdateLightRegistry()
     {
+        if (!Player.isLocalPlayerLoaded) return;
         float now = Time.unscaledTime;
-        if (now < _nextTorchScan) return;
-        _nextTorchScan = now + 2f;
-        RefreshTorches();
+        if (!_worldRegistryReady)
+        {
+            if (now < _nextWorldScan) return;
+            _nextWorldScan = now + 2f;
+            RefreshTorches();
+            if (_targets.Count > 0 && _targets.Count == _lastWorldTargetCount) _stableWorldScans++;
+            else _stableWorldScans = 0;
+            _lastWorldTargetCount = _targets.Count;
+            _worldRegistryReady = _stableWorldScans >= 1;
+            return;
+        }
+
+        // Placed torches are discovered directly by the targeting ray and remote
+        // color messages request a refresh only when their target is genuinely new.
     }
 
     private void RefreshTorches()
     {
         _targets.Clear();
-        var rootIds = new HashSet<int>();
+        _nearbyTargets.Clear();
+        _targetsByRoot.Clear();
         APlacable[] found = UnityEngine.Object.FindObjectsOfType<APlacable>(true);
         for (int i = 0; found != null && i < found.Length; i++)
         {
@@ -176,7 +200,6 @@ public sealed class BetterLightsController : MonoBehaviour
                 continue;
             }
 
-            rootIds.Add(target.Root.GetInstanceID());
             AddTarget(target);
         }
 
@@ -184,7 +207,7 @@ public sealed class BetterLightsController : MonoBehaviour
         for (int i = 0; lights != null && i < lights.Length; i++)
         {
             LightTarget target = TorchColorService.CreateLanternTarget(lights[i]);
-            if (target == null || !rootIds.Add(target.Root.GetInstanceID()))
+            if (target == null)
             {
                 continue;
             }
@@ -201,21 +224,45 @@ public sealed class BetterLightsController : MonoBehaviour
         FlushPendingSnapshots();
     }
 
-    private void AddTarget(LightTarget target)
+    private bool AddTarget(LightTarget target)
     {
+        if (target?.Root == null) return false;
+        int rootId = target.Root.GetInstanceID();
+        if (_targetsByRoot.ContainsKey(rootId)) return false;
+        _targetsByRoot.Add(rootId, target);
         _targets.Add(target);
-        if (!_defaultColors.ContainsKey(target.Key))
-        {
-            _defaultColors[target.Key] = TorchColorService.ReadColor(target);
-        }
-
         if (_networkColors.TryGetValue(target.Key, out Color networkColor))
         {
+            RememberDefaultColor(target);
             TorchColorService.Apply(target, networkColor);
         }
         else if (!IsRemoteClient() && BetterLightsPlugin.TryGetTorchColor(target.Key, out Color savedColor))
         {
+            RememberDefaultColor(target);
             TorchColorService.Apply(target, savedColor);
+        }
+        return true;
+    }
+
+    private void RememberDefaultColor(LightTarget target)
+    {
+        if (!_defaultColors.ContainsKey(target.Key)) _defaultColors[target.Key] = TorchColorService.ReadColor(target);
+    }
+
+    private void RefreshNearbyTargets()
+    {
+        _nearbyTargets.Clear();
+        Camera camera = Player.mainCamera;
+        if (camera == null) return;
+        Vector3 origin = camera.transform.position;
+        float radius = BetterLightsPlugin.InteractionRange.Value + 1.5f;
+        float radiusSquared = radius * radius;
+        for (int i = 0; i < _targets.Count; i++)
+        {
+            LightTarget target = _targets[i];
+            if (target == null || !target.IsValid) continue;
+            Vector3 offset = TorchColorService.GetVisualPosition(target) - origin;
+            if (offset.sqrMagnitude <= radiusSquared) _nearbyTargets.Add(target);
         }
     }
 
@@ -232,9 +279,26 @@ public sealed class BetterLightsController : MonoBehaviour
         float minimumDot = BetterLightsPlugin.AimThreshold.Value;
         float bestScore = float.MaxValue;
         LightTarget best = null;
-        for (int i = 0; i < _targets.Count; i++)
+        Ray ray = new(camera.transform.position, camera.transform.forward);
+        if (Physics.Raycast(ray, out RaycastHit hit, maximumDistance))
         {
-            LightTarget target = _targets[i];
+            APlacable placable = hit.collider != null ? hit.collider.GetComponentInParent<APlacable>() : null;
+            LightTarget direct = null;
+            if (TorchColorService.IsSupported(placable))
+            {
+                int rootId = placable.transform.GetInstanceID();
+                if (!_targetsByRoot.TryGetValue(rootId, out direct)) direct = TorchColorService.CreateTorchTarget(placable);
+            }
+            if (direct != null)
+            {
+                AddTarget(direct);
+                best = direct;
+                bestScore = Vector3.Distance(camera.transform.position, TorchColorService.GetVisualPosition(best));
+            }
+        }
+        for (int i = 0; i < _nearbyTargets.Count; i++)
+        {
+            LightTarget target = _nearbyTargets[i];
             if (target == null || !target.IsValid)
             {
                 continue;
@@ -961,7 +1025,13 @@ public sealed class BetterLightsController : MonoBehaviour
 
         color.a = 1f;
         _networkColors[key] = color;
-        ApplyNetworkColor(key, color);
+        if (!ApplyNetworkColor(key, color) && _worldRegistryReady)
+        {
+            _worldRegistryReady = false;
+            _stableWorldScans = 0;
+            _lastWorldTargetCount = -1;
+            _nextWorldScan = 0f;
+        }
     }
 
     private void SendSnapshot(ulong clientId)
@@ -971,7 +1041,8 @@ public sealed class BetterLightsController : MonoBehaviour
             LightTarget target = _targets[i];
             if (target != null && target.IsValid)
             {
-                SendColor(clientId, target.Key, TorchColorService.ReadColor(target));
+                if (BetterLightsPlugin.TryGetTorchColor(target.Key, out Color savedColor))
+                    SendColor(clientId, target.Key, savedColor);
             }
         }
     }
@@ -1044,16 +1115,19 @@ public sealed class BetterLightsController : MonoBehaviour
         }
     }
 
-    private void ApplyNetworkColor(string key, Color color)
+    private bool ApplyNetworkColor(string key, Color color)
     {
+        bool applied = false;
         for (int i = 0; i < _targets.Count; i++)
         {
             LightTarget target = _targets[i];
             if (target != null && target.IsValid && string.Equals(target.Key, key, StringComparison.Ordinal))
             {
                 TorchColorService.Apply(target, color);
+                applied = true;
             }
         }
+        return applied;
     }
 
     private bool IsRemoteClient()
@@ -1094,10 +1168,18 @@ public sealed class BetterLightsController : MonoBehaviour
         _syncAcknowledged = false;
         _compatibleClients.Clear();
         _pendingSnapshotClients.Clear();
+        _targets.Clear();
+        _nearbyTargets.Clear();
+        _targetsByRoot.Clear();
+        _worldRegistryReady = false;
+        _stableWorldScans = 0;
+        _lastWorldTargetCount = -1;
+        _nextWorldScan = 0f;
+        _nextNearbyScan = 0f;
         if (_networkColors.Count > 0)
         {
             _networkColors.Clear();
-            _nextTorchScan = 0f;
+            _nextWorldScan = 0f;
         }
     }
 

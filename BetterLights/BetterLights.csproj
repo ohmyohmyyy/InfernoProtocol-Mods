@@ -7,9 +7,9 @@
     <AssemblyName>InfernoProtocol.BetterLights</AssemblyName>
     <RootNamespace>InfernoProtocol.BetterLights</RootNamespace>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>0.3.4</Version>
-    <FileVersion>0.3.4.0</FileVersion>
-    <AssemblyVersion>0.3.4.0</AssemblyVersion>
+    <Version>0.3.5</Version>
+    <FileVersion>0.3.5.0</FileVersion>
+    <AssemblyVersion>0.3.5.0</AssemblyVersion>
     <Deterministic>true</Deterministic>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <DebugType>portable</DebugType>
@@ -26,6 +26,7 @@
     <Reference Include="Il2Cppmscorlib" HintPath="$(InteropDir)\Il2Cppmscorlib.dll" Private="false" />
     <Reference Include="Il2CppSystem" HintPath="$(InteropDir)\Il2CppSystem.dll" Private="false" />
     <Reference Include="UnityEngine.CoreModule" HintPath="$(InteropDir)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="$(InteropDir)\UnityEngine.PhysicsModule.dll" Private="false" />
     <Reference Include="Unity.InputSystem" HintPath="$(InteropDir)\Unity.InputSystem.dll" Private="false" />
     <Reference Include="Unity.Netcode.Runtime" HintPath="$(InteropDir)\Unity.Netcode.Runtime.dll" Private="false" />
     <Reference Include="UnityEngine.ParticleSystemModule" HintPath="$(InteropDir)\UnityEngine.ParticleSystemModule.dll" Private="false" />
