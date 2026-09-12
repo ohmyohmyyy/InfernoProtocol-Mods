@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace InfernoProtocol.Renovator;
 
-[BepInPlugin("com.holden.infernoprotocol.renovator","Renovator","0.5.0")]
+[BepInPlugin("com.holden.infernoprotocol.renovator","Renovator","0.6.0")]
 public sealed class RenovatorPlugin:BasePlugin
 {
     internal static ManualLogSource Logger;
@@ -23,7 +23,7 @@ public sealed class RenovatorPlugin:BasePlugin
     private Harmony _harmony;
     public override void Load()
     {
-        Logger=Log; Enabled=Config.Bind("General","Enabled",true,"Enable Renovator. No multiplayer synchronization.");
+        Logger=Log; Enabled=Config.Bind("General","Enabled",true,"Enable Renovator. Hosts synchronize committed finishes and object moves to Renovator clients.");
         MoveSnap=Config.Bind("Move tool","Stepped nudges",true,"Use exact increments instead of continuous movement for Renovator nudges. Native structure snapping remains automatic.");
         MoveStepIndex=Config.Bind("Move tool","Movement step",1,new ConfigDescription("Saved movement precision: 0=.05m, 1=.1m, 2=.25m, 3=.5m, 4=1m.",new AcceptableValueRange<int>(0,4)));
         AngleStepIndex=Config.Bind("Move tool","Rotation step",1,new ConfigDescription("Saved angle precision: 0=1, 1=5, 2=15, 3=45, 4=90 degrees.",new AcceptableValueRange<int>(0,4)));
@@ -37,7 +37,7 @@ public sealed class RenovatorPlugin:BasePlugin
         PatchOptionalEditorGate("InfernoProtocol.UtilityWheel.UtilityWheelController","CanRemainOpen");
         PatchOptionalEditorGate("InfernoProtocol.BetterLights.BetterLightsController","CanTarget");
         PatchOptionalEditorGate("InfernoProtocol.BetterLights.BetterLightsController","CanRemainOpen");
-        Log.LogInfo("Renovator 0.5.0 loaded. Post-placement object transforms and 27 surface finishes enabled.");
+        Log.LogInfo("Renovator 0.6.0 loaded. Host-authoritative finishes and committed moves enabled.");
     }
 
     private void PatchOptionalEditorGate(string typeName,string methodName)
@@ -83,6 +83,13 @@ public sealed class RenovatorPlugin:BasePlugin
         private static void Placed(SimplePlacable __instance) { Controller?.Register(__instance); }
         [HarmonyPrefix, HarmonyPatch(typeof(SimplePlacable),nameof(SimplePlacable.OnDestroy))]
         private static void Removed(SimplePlacable __instance) { Controller?.Forget(__instance); }
+        [HarmonyPostfix, HarmonyPatch(typeof(PlacableManager),nameof(PlacableManager.RegisterPlacable))]
+        private static void Registered(APlacable __0) { Controller?.Register(__0); }
+        [HarmonyPrefix, HarmonyPatch(typeof(PlacableManager),nameof(PlacableManager.UnregisterPlacable))]
+        private static void Unregistering(PlacableManager __instance,ulong __0)
+        {
+            if(__instance!=null) Controller?.Forget(__instance.GetPlacable(__0));
+        }
 
         [HarmonyPrefix, HarmonyPatch(typeof(EffectManager),nameof(EffectManager.HighlightRenderer),new[]{typeof(Renderer)})]
         private static bool RefineRendererHighlight(Renderer highligtObject) => Controller?.SuppressHammerHighlight(highligtObject)!=true;

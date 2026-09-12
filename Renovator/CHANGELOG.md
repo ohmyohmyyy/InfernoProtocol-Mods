@@ -1,3 +1,9 @@
+# 0.6.0
+
+- Added host-authoritative multiplayer synchronization for committed surface finishes.
+- Added live synchronization for accepted object moves; previews remain local to the host.
+- Added join-time finish snapshots and a compatibility handshake so unmodded clients are unaffected.
+
 # 0.5.0
 
 - First Renovator release.

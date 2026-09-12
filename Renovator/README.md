@@ -1,4 +1,4 @@
-# Renovator 0.5.0
+# Renovator
 
 Renovator expands Inferno Protocol's building tools with post-placement editing, clearer targeting, and 27 curated finishes for walls, floors, ceilings, and roofs.
 
@@ -10,10 +10,11 @@ Renovator expands Inferno Protocol's building tools with post-placement editing,
 - Applies seamless procedural wallpaper, tile, wood, textile, and stone finishes to compatible surfaces.
 - Replaces the Building Hammer's opaque target wash with a thin mint outline on placeable objects.
 - Supports mouse, keyboard, and controller navigation.
-- Saves finish choices with the world; moved objects use the game's native position and rotation save data.
+- Saves finish choices with the world and synchronizes committed finishes to connected Renovator clients.
+- Synchronizes accepted post-placement moves live; the game's save and initial-join placement data remain authoritative.
 - Shares generated textures and mapped meshes, batches world restoration, and avoids whole-scene work during normal gameplay.
 
-Renovator currently operates in single-player and for the host. Surface finishes are not synchronized to other players.
+Editing remains host-authoritative. Connected players need the same Renovator version to see synchronized finishes and live post-placement moves; clients without the mod receive no custom traffic.
 
 ## Open Renovator
 

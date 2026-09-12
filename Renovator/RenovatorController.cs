@@ -26,7 +26,11 @@ public sealed class RenovatorController:MonoBehaviour
     private static readonly float[] FreeSpeeds={.35f,.7f,1.35f,2.5f,4f};
     private static readonly Dictionary<Items,bool> Eligibility=new();
     private readonly Dictionary<int,APlacable> _pieces=new();
+    private readonly Dictionary<string,APlacable> _piecesByKey=new(StringComparer.Ordinal);
     private readonly Dictionary<int,RenovatorFinish> _applied=new();
+    private readonly Dictionary<string,RenovatorChoice> _networkChoices=new(StringComparer.Ordinal);
+    private readonly Dictionary<string,(Vector3 Position,Quaternion Rotation)> _pendingMoves=new(StringComparer.Ordinal);
+    private readonly HashSet<string> _snapshotChoices=new(StringComparer.Ordinal);
     private readonly HashSet<int> _pendingRestore=new();
     private readonly HashSet<int> _failed=new();
     private readonly List<int> _completed=new();
@@ -55,17 +59,35 @@ public sealed class RenovatorController:MonoBehaviour
     private bool _scanned,_faulted,_reported,_release,_look,_move,_cursor,_inputCaptured,_moveBlocked,_moveController,_moveMouseLook,_previewPoseReady,_previewPoseApplied;
     private bool _readyThisFrame,_hammerThisFrame,_highlightSuppression,_moveInputStateKnown,_moveInputAllowsLook;
     private CursorLockMode _lock;
+    private readonly RenovatorNetworkSync _networkSync;
 
-    public RenovatorController(IntPtr pointer):base(pointer) { }
+    public RenovatorController(IntPtr pointer):base(pointer)
+    {
+        _networkSync=new RenovatorNetworkSync(
+            ()=>_file!=null&&!_faulted,
+            ()=>_saved,
+            BeginNetworkSnapshot,
+            ReceiveNetworkFinish,
+            ReceiveNetworkMove,
+            EndNetworkSnapshot,
+            ClearNetworkState);
+    }
     internal bool Editing=>_inputCaptured;
 
     internal void Register(APlacable piece)
     {
-        if(piece==null||!Eligible(piece.placableItem)) return;
+        if(piece==null||piece.placableId==0) return;
         int id=piece.GetInstanceID();
         bool first=!_pieces.ContainsKey(id);
         _pieces[id]=piece;
-        if(first) _pendingRestore.Add(id);
+        string key=Key(piece);
+        _piecesByKey[key]=piece;
+        if(_pendingMoves.Remove(key,out var pose))
+        {
+            piece.transform.SetPositionAndRotation(pose.Position,pose.Rotation);
+            Physics.SyncTransforms();
+        }
+        if(first&&Eligible(piece.placableItem)) _pendingRestore.Add(id);
     }
 
     internal void Forget(APlacable piece)
@@ -75,6 +97,7 @@ public sealed class RenovatorController:MonoBehaviour
         if(piece==_target) SetTarget(null);
         int id=piece.GetInstanceID();
         if(_applied.Remove(id,out var finish)) finish.Dispose();
+        _piecesByKey.Remove(Key(piece));
         _pieces.Remove(id); _pendingRestore.Remove(id); _failed.Remove(id);
     }
 
@@ -108,15 +131,35 @@ public sealed class RenovatorController:MonoBehaviour
         try
         {
             float now=Time.unscaledTime;
+            bool playerLoaded=RenovatorPlugin.Enabled.Value&&Player.isLocalPlayerLoaded&&Player.localPlayer!=null;
+            _networkSync.Tick(playerLoaded);
             if(_release&&Released()) ReleaseInput();
             _readyThisFrame=Ready(); _hammerThisFrame=_readyThisFrame&&Hammer();
+            if(playerLoaded&&_networkSync.IsRemoteClient)
+            {
+                if(!_scanned)
+                {
+                    _scanned=true;
+                    foreach(var piece in UnityEngine.Object.FindObjectsOfType<APlacable>(false)) Register(piece);
+                }
+                if(_pendingRestore.Count>0&&now>=_nextRestore)
+                {
+                    _nextRestore=now+.1f;
+                    RestorePending();
+                }
+                if(_homeUi?.Open==true) CloseHome();
+                if(_ui?.Open==true) Close(false);
+                if(_moveUi?.Open==true) CancelMove();
+                SetTarget(null); _ui?.Prompt(false);
+                return;
+            }
             if(!_readyThisFrame)
             {
                 if(_homeUi?.Open==true) CloseHome();
                 if(_ui?.Open==true) Close(false);
                 if(_moveUi?.Open==true) CancelMove();
                 SetTarget(null); _ui?.Prompt(false);
-                if(!Player.isLocalPlayerLoaded&&_file!=null) ResetWorld();
+                if(!Player.isLocalPlayerLoaded&&(_file!=null||_scanned)) ResetWorld();
                 return;
             }
 
@@ -161,6 +204,7 @@ public sealed class RenovatorController:MonoBehaviour
                         _faulted=true;
                         RenovatorPlugin.Logger.LogError("Renovator preferences could not be read; preserving file and disabling writes: "+e.Message);
                     }
+                    if(!_faulted) _networkSync.BroadcastSnapshot();
                 }
             }
             if(_file==null||_faulted) return;
@@ -221,7 +265,7 @@ public sealed class RenovatorController:MonoBehaviour
                     if(piece!=null&&(piece.objectMeshFilter!=null||piece.objectRenderer!=null))
                     {
                         next=piece;
-                        if(CanRenovate(piece)) Register(piece);
+                        if(CanMove(piece)) Register(piece);
                     }
                 }
                 SetTarget(next);
@@ -387,8 +431,9 @@ public sealed class RenovatorController:MonoBehaviour
             if(_applied.ContainsKey(id)||_failed.Contains(id)) { _completed.Add(id); continue; }
 
             string key=Key(piece);
-            if(!_saved.TryGetValue(key,out var choice)||choice.Pattern==0) { _completed.Add(id); continue; }
-            if(!piece.loadedFromSave)
+            Dictionary<string,RenovatorChoice> choices=_networkSync.IsRemoteClient?_networkChoices:_saved;
+            if(!choices.TryGetValue(key,out var choice)||choice.Pattern==0) { _completed.Add(id); continue; }
+            if(!_networkSync.IsRemoteClient&&!piece.loadedFromSave)
             {
                 _staleChoices.Add(key); _completed.Add(id);
                 continue;
@@ -726,6 +771,7 @@ public sealed class RenovatorController:MonoBehaviour
             _placementPreview.End(true,position,rotation);
         }
         Physics.SyncTransforms();
+        _networkSync.BroadcastMove(Key(_moveTarget),_moveTarget.transform.position,_moveTarget.transform.rotation);
         RenovatorPlugin.Logger.LogInfo("Moved "+_moveTarget.placableItem+" / "+Key(_moveTarget));
         _moveUi.Hide(); _moveTarget=null; _moveBlocked=false; _moveMouseLook=false; _previewPoseReady=false; _previewPoseApplied=false;
         _nativePlacementFrame=-1; _moveInputStateKnown=false; _release=true;
@@ -763,6 +809,7 @@ public sealed class RenovatorController:MonoBehaviour
             else updated[Key(_target)]=new RenovatorChoice {Pattern=pattern,Scale=scale};
             WriteChoices(updated); _saved=updated;
             if(pattern==0) ReleaseFinish(_target);
+            _networkSync.BroadcastFinish(Key(_target),pattern,scale);
             RenovatorPlugin.Logger.LogInfo("Renovator saved for "+Key(_target)+": "+RenovatorPatterns.Names[pattern]);
             Close(true);
         }
@@ -797,6 +844,77 @@ public sealed class RenovatorController:MonoBehaviour
         if(piece!=null&&_applied.Remove(piece.GetInstanceID(),out var finish)) finish.Dispose();
     }
 
+    private void BeginNetworkSnapshot()=>_snapshotChoices.Clear();
+
+    private void ReceiveNetworkFinish(string key,int pattern,int scale)
+    {
+        _snapshotChoices.Add(key);
+        if(pattern==0)
+        {
+            _networkChoices.Remove(key);
+            RestoreNetworkPiece(key);
+            return;
+        }
+        var choice=new RenovatorChoice {Pattern=pattern,Scale=scale};
+        _networkChoices[key]=choice;
+        ApplyOrQueueNetworkPiece(key,choice);
+    }
+
+    private void EndNetworkSnapshot()
+    {
+        _staleChoices.Clear();
+        foreach(string key in _networkChoices.Keys)
+            if(!_snapshotChoices.Contains(key)) _staleChoices.Add(key);
+        foreach(string key in _staleChoices)
+        {
+            _networkChoices.Remove(key);
+            RestoreNetworkPiece(key);
+        }
+        _snapshotChoices.Clear();
+    }
+
+    private void ReceiveNetworkMove(string key,Vector3 position,Quaternion rotation)
+    {
+        if(_piecesByKey.TryGetValue(key,out APlacable piece)&&piece!=null)
+        {
+            piece.transform.SetPositionAndRotation(position,rotation);
+            Physics.SyncTransforms();
+        }
+        else _pendingMoves[key]=(position,rotation);
+    }
+
+    [HideFromIl2Cpp]
+    private void ApplyOrQueueNetworkPiece(string key,RenovatorChoice choice)
+    {
+        if(!_piecesByKey.TryGetValue(key,out APlacable piece)||piece==null) return;
+        int id=piece.GetInstanceID();
+        _failed.Remove(id);
+        if(_applied.TryGetValue(id,out RenovatorFinish finish))
+        {
+            try { finish.Apply(Texture(choice.Pattern),choice.Pattern,choice.Scale); }
+            catch(Exception exception)
+            {
+                finish.Dispose(); _applied.Remove(id); _failed.Add(id);
+                RenovatorPlugin.Logger.LogWarning("Renovator network finish skipped "+piece.placableItem+": "+exception.Message);
+            }
+            return;
+        }
+        _pendingRestore.Add(id);
+    }
+
+    private void RestoreNetworkPiece(string key)
+    {
+        if(!_piecesByKey.TryGetValue(key,out APlacable piece)||piece==null) return;
+        ReleaseFinish(piece);
+        _pendingRestore.Remove(piece.GetInstanceID());
+    }
+
+    private void ClearNetworkState()
+    {
+        foreach(string key in _networkChoices.Keys) RestoreNetworkPiece(key);
+        _networkChoices.Clear(); _snapshotChoices.Clear(); _pendingMoves.Clear();
+    }
+
     private static bool Released()
     {
         var g=Gamepad.current;
@@ -823,7 +941,8 @@ public sealed class RenovatorController:MonoBehaviour
         if(_homeUi?.Open==true) CloseHome();
         Close(false);
         foreach(var finish in _applied.Values) finish.Dispose();
-        _applied.Clear(); _pieces.Clear(); _pendingRestore.Clear(); _failed.Clear(); _saved.Clear();
+        _applied.Clear(); _pieces.Clear(); _piecesByKey.Clear(); _pendingRestore.Clear(); _failed.Clear(); _saved.Clear();
+        _networkChoices.Clear(); _snapshotChoices.Clear(); _pendingMoves.Clear();
         SetTarget(null); _file=null; _faulted=false; _scanned=false; _reported=false;
     }
 
@@ -831,7 +950,7 @@ public sealed class RenovatorController:MonoBehaviour
     {
         ResetWorld();
         if(_release) ReleaseInput();
-        _placementPreview.Dispose(); _lookMaterialOverride.Dispose(); _cue.Dispose(); _homeUi?.Dispose(); _homeUi=null; _ui?.Dispose(); _ui=null; _moveUi?.Dispose(); _moveUi=null;
+        _networkSync.Dispose(); _placementPreview.Dispose(); _lookMaterialOverride.Dispose(); _cue.Dispose(); _homeUi?.Dispose(); _homeUi=null; _ui?.Dispose(); _ui=null; _moveUi?.Dispose(); _moveUi=null;
         foreach(var texture in _textures) if(texture!=null) UnityEngine.Object.Destroy(texture);
         foreach(var texture in _thumbnails) if(texture!=null) UnityEngine.Object.Destroy(texture);
         Array.Clear(_textures,0,_textures.Length);

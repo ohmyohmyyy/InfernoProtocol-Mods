@@ -31,9 +31,9 @@ Upload each ZIP separately to the **Inferno Protocol** community through the Thu
 - `BetterUI-0.11.0.zip`
 - `UtilityWheel-0.2.3.zip`
 - `BetterLights-0.3.3.zip`
-- `Renovator-0.5.0.zip`
+- `Renovator-0.6.0.zip`
 
-Select the most accurate categories offered by the upload page. BetterUI and Utility Wheel are client-side quality-of-life mods. BetterLights is a quality-of-life mod with optional host synchronization, but every player who should see synchronized colors needs BetterLights installed. Renovator is a building and quality-of-life mod; it currently operates in single-player or for the host, and its surface finishes are not synchronized to other players.
+Select the most accurate categories offered by the upload page. BetterUI and Utility Wheel are client-side quality-of-life mods. BetterLights is a quality-of-life mod with optional host synchronization, but every player who should see synchronized colors needs BetterLights installed. Renovator is a host-authoritative building and quality-of-life mod; players need Renovator 0.6.0 or later to see synchronized finishes and accepted object moves.
 
 The package names are deliberately stable. For future updates, increment `version_number` and the matching plugin/assembly version without changing the package name.
 

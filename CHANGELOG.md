@@ -1,5 +1,11 @@
 # Changelog
 
+## Renovator 0.6.0 - 2026-09-12
+
+- Adds host-authoritative synchronization for committed surface finishes and accepted object moves.
+- Sends finish snapshots to compatible players when they join an active session.
+- Keeps previews and editing host-only while leaving unmodded clients unaffected.
+
 ## Renovator 0.5.0 - 2026-09-10
 
 - Adds native-style post-placement movement, rotation, snapping, and precise alignment controls.

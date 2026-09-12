@@ -10,7 +10,7 @@ Independent gameplay and quality-of-life mods for [Inferno Protocol on Steam](ht
 | Utility Wheel | 0.2.3 | Adds a translucent controller radial menu for occupied hotbar slots. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/UtilityWheel/) |
 | BetterLights | 0.3.3 | Customizes individual torch and lantern colors with controller and mouse support. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/BetterLights/) |
 | [ContentPlus](FieldQuests/README.md) | 0.5.0 | Adds a quest board, XP progression and twelve unlockable equipment finishes. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/ContentPlus/) |
-| [Renovator](Renovator/README.md) | 0.5.0 | Moves and aligns placed objects and applies curated finishes to building surfaces. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/Renovator/) |
+| [Renovator](Renovator/README.md) | 0.6.0 | Moves and aligns placed objects, applies curated finishes, and synchronizes committed renovations in multiplayer. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/Renovator/) |
 
 The mods can be installed separately. Utility Wheel automatically uses BetterUI's remembered color palette when both are installed.
 
@@ -118,7 +118,7 @@ BepInEx\config\com.holden.infernoprotocol.betterlights.cfg
 
 Renovator adds native-style post-placement movement and rotation, precise alignment controls, refined hammer targeting, and 27 curated finishes for compatible walls, floors, ceilings, and roofs. It supports mouse, keyboard, and controller input. [Full Renovator details and controls](Renovator/README.md).
 
-Renovator currently operates in single-player and for the host. Surface finishes are not synchronized to other players.
+Editing is host-authoritative. Players with Renovator 0.6.0 or later see synchronized finishes and accepted object moves; unmodded clients remain unaffected but do not receive custom finishes.
 
 ## Uninstall
 

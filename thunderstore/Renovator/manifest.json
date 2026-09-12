@@ -1,8 +1,8 @@
 {
   "name": "Renovator",
-  "version_number": "0.5.0",
+  "version_number": "0.6.0",
   "website_url": "https://github.com/ohmyohmyyy/InfernoProtocol-Mods/tree/main/Renovator",
-  "description": "Move and align placed objects, refine hammer targeting, and apply 27 curated finishes to walls, floors, ceilings, and roofs.",
+  "description": "Move and align placed objects, apply 27 curated finishes, and synchronize committed renovations in multiplayer.",
   "dependencies": [
     "FrankMods-InfernoProtocolInteropFix-1.0.0"
   ]
