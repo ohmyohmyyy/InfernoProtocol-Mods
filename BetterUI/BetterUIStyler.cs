@@ -181,6 +181,8 @@ internal static class BetterUIStyler
         button.hoverColor = hover;
         button.textColor = normalText;
         button.hoverTextColor = BetterUITheme.Text;
+        button._disabledBackgroundColor = BetterUITheme.PanelSoft;
+        button._disabledTextColor = BetterUITheme.TextDim;
 
         Graphic graphic = button.backgroundImage;
         Image image = graphic != null ? graphic.TryCast<Image>() : null;
@@ -227,6 +229,8 @@ internal static class BetterUIStyler
         button.hoverColor = hover;
         button.textColor = text;
         button.hoverTextColor = BetterUITheme.Text;
+        button._disabledBackgroundColor = BetterUITheme.PanelSoft;
+        button._disabledTextColor = BetterUITheme.TextDim;
 
         Graphic graphic = button.backgroundImage;
         Image image = graphic != null ? graphic.TryCast<Image>() : null;

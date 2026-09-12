@@ -504,7 +504,34 @@ internal sealed class CraftingMenuBuilder
         overviewLayout.childForceExpandWidth = false;
         overviewLayout.childForceExpandHeight = false;
         MoveToLayout(selected._outputItemContainer != null ? selected._outputItemContainer.transform : null, overview, 104f, 104f, 0f);
-        MoveToLayout(selected._outputItemNameTMP != null ? selected._outputItemNameTMP.transform : null, overview, 160f, 240f, 1f);
+
+        RectTransform outputDetails = CreateRect("BetterUI_OutputDetails", overview);
+        SetLayout(outputDetails.gameObject, 160f, 240f, 1f, 78f, 92f, 0f);
+        VerticalLayoutGroup detailsLayout = outputDetails.gameObject.AddComponent<VerticalLayoutGroup>();
+        detailsLayout.spacing = 8f;
+        detailsLayout.childAlignment = TextAnchor.MiddleLeft;
+        detailsLayout.childControlWidth = true;
+        detailsLayout.childControlHeight = true;
+        detailsLayout.childForceExpandWidth = true;
+        detailsLayout.childForceExpandHeight = false;
+        MoveToLayout(selected._outputItemNameTMP != null ? selected._outputItemNameTMP.transform : null, outputDetails, 0f, 0f, 1f);
+        if (selected._outputItemNameTMP != null)
+        {
+            SetLayout(selected._outputItemNameTMP.gameObject, 0f, 0f, 1f, 36f, 42f, 0f);
+        }
+
+        TextMeshProUGUI durability = CreateLabel(
+            "BetterUI_CraftingDurability",
+            outputDetails,
+            crafting._titleTMP);
+        durability.text = string.Empty;
+        durability.fontSize = 15f;
+        durability.fontStyle = FontStyles.Bold;
+        durability.color = BetterUITheme.Accent;
+        durability.characterSpacing = 0.8f;
+        durability.alignment = TextAlignmentOptions.MidlineLeft;
+        durability.enableWordWrapping = false;
+        SetLayout(durability.gameObject, 0f, 0f, 1f, 24f, 26f, 0f);
 
         if (selected._sliderContainer != null)
         {

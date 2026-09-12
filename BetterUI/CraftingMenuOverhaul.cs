@@ -33,6 +33,7 @@ internal sealed class CraftingMenuOverhaul
     private Transform _recipeContainer;
     private GridLayoutGroup _recipeGrid;
     private TextMeshProUGUI _recipeHeading;
+    private TextMeshProUGUI _craftingDurability;
     private GameObject _replacementRoot;
     private RectTransform _themeButton;
     private GameObject _requirementsSection;
@@ -276,6 +277,7 @@ internal sealed class CraftingMenuOverhaul
                     label.color = BetterUITheme.TextMuted;
                     break;
                 case "BetterUI_FabricationPercent":
+                case "BetterUI_CraftingDurability":
                     label.color = BetterUITheme.Accent;
                     break;
             }
@@ -342,6 +344,10 @@ internal sealed class CraftingMenuOverhaul
         Transform recipeHeading = crafting.transform.Find(
             "BetterUI_CraftingMenu/BetterUI_Body/BetterUI_RecipeBrowser/BetterUI_RecipeHeader/BetterUI_RecipeHeading");
         _recipeHeading = recipeHeading != null ? recipeHeading.GetComponent<TextMeshProUGUI>() : null;
+        Transform durability = _replacementRoot != null
+            ? FindNamedDescendant(_replacementRoot.transform, "BetterUI_CraftingDurability")
+            : null;
+        _craftingDurability = durability != null ? durability.GetComponent<TextMeshProUGUI>() : null;
 
         _filterButtons[0] = crafting.filterMiscButton;
         _filterButtons[1] = crafting.filterCombatButton;
@@ -719,6 +725,7 @@ internal sealed class CraftingMenuOverhaul
 
         CraftingRecipeUI selectedRecipe = CraftingTableUI.selectedRecipeOnListUI;
         bool hasVisibleSelection = selectedRecipe != null && selectedRecipe.gameObject.activeInHierarchy;
+        RefreshCraftingDurability(selected, hasVisibleSelection);
         if (selected.didntSelectRecipeParent != null
             && selected.didntSelectRecipeParent.activeSelf == hasVisibleSelection)
         {
@@ -743,6 +750,28 @@ internal sealed class CraftingMenuOverhaul
         _workspaceRecipeId = recipeId;
         _workspaceQuantity = quantity;
         _layoutRebuildPasses = Mathf.Max(_layoutRebuildPasses, 2);
+    }
+
+    private void RefreshCraftingDurability(SelectedCraftingRecipeUI selected, bool hasVisibleSelection)
+    {
+        if (_craftingDurability == null)
+        {
+            return;
+        }
+
+        int current = 0;
+        int maximum = 0;
+        bool visible = hasVisibleSelection
+            && selected._selectedRecipe != null
+            && DurabilityNumbers.TryGet(
+                selected._selectedRecipe.outputItemData,
+                out current,
+                out maximum);
+        _craftingDurability.gameObject.SetActive(visible);
+        if (visible)
+        {
+            _craftingDurability.text = $"DURABILITY  //  {current} / {maximum}";
+        }
     }
 
     private static void ConfigureRecipeContent(Transform recipeContainer)

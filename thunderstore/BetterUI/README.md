@@ -1,12 +1,14 @@
 # BetterUI
 
-Refined crafting menus and a living DNA tree for your acquired genetics.
+Refined crafting and building menus, exact hotbar durability, and a living DNA tree for your acquired genetics.
 
 ## Features
 
 - Clearer recipes, ingredients, categories, and craft-button states.
 - Search and live recipe availability updates.
 - Integrated fabrication progress.
+- A streamlined building catalog with search, categories, plan inspection, and material requirements.
+- Exact durability values beneath durable hotbar items.
 - Five selectable color palettes that persist between sessions.
 - Restores the hand-crafting launcher correctly after closing the menu.
 - A compact genetics tree with curved branches, gene icons and native descriptions.

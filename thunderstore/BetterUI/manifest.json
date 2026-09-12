@@ -1,8 +1,8 @@
 {
   "name": "BetterUI",
-  "version_number": "0.10.1",
+  "version_number": "0.11.0",
   "website_url": "https://github.com/ohmyohmyyy/InfernoProtocol-Mods",
-  "description": "Polished crafting menus and an interactive DNA tree for your acquired genetics, with mouse/controller navigation and remembered color themes.",
+  "description": "Polished crafting and building menus, exact hotbar durability, and an interactive genetics tree with mouse/controller support.",
   "dependencies": [
     "FrankMods-InfernoProtocolInteropFix-1.0.0"
   ]

@@ -1,6 +1,6 @@
-# BetterUI 0.10.1
+# BetterUI 0.11.0
 
-Polished crafting menus and a compact genetics tree for Inferno Protocol. This mod changes presentation only, not crafting costs/times, gene acquisition, gene stages or effects.
+Polished crafting and building menus plus a compact genetics tree for Inferno Protocol. This mod changes presentation only, not crafting costs/times, construction rules, gene acquisition, gene stages or effects.
 
 ## Genetics
 
@@ -15,7 +15,11 @@ Config: `BepInEx/config/com.holden.infernoprotocol.betterui.cfg`. F8 pauses/resu
 
 ## Crafting
 
-Recipe search, clearer ingredients/categories, larger icons, integrated crafting progress and remembered color themes remain available. Use the crafting footer's color wheel to change the palette.
+Recipe search, clearer ingredients/categories, larger icons, integrated crafting progress and remembered color themes remain available. Durable outputs show exact `current / maximum` durability in the inspection panel. Hotbar slots add the same compact exact-value readout below each durable item, while the building catalog intentionally omits durability. Use the crafting footer's color wheel to change the palette.
+
+## Building
+
+The hammer's building catalog now uses the same BetterUI language: a category rail, searchable two-column plan browser, readable material cards, and a larger placement workspace. Its palette is shared with crafting, while the original recipe, resource, unlock, mouse, and controller behavior remains authoritative.
 
 ## Installation
 

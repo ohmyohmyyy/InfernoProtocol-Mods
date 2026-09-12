@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.0
+
+- Added building UI.
+- Display item durability in the hotbar.
+
 ## 0.10.1
 
 performance improvement for GeneUI
