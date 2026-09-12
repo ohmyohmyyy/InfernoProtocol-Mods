@@ -1,3 +1,7 @@
+# 0.5.2
+
+- Bug fixes and improvements.
+
 # 0.5.1
 
 - Fixed creature kills not counting toward hunt quests.

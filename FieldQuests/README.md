@@ -1,4 +1,4 @@
-# ContentPlus 0.5.1
+# ContentPlus 0.5.2
 
 ![ContentPlus](../thunderstore/ContentPlus/icon.png)
 
@@ -62,7 +62,7 @@ Direct player-attributed deaths are supported. Kills whose native damage source 
 
 With Thunderstore, install ContentPlus and launch using Start modded. The package depends on FrankMods-InfernoProtocolInteropFix-1.0.0, which brings in BepInEx 6 IL2CPP. BetterUI, BetterLights and Utility Wheel are optional, not required.
 
-For manual installation, install BepInEx 6 IL2CPP and the [InfernoProtocolInteropFix](https://thunderstore.io/c/inferno-protocol/p/FrankMods/InfernoProtocolInteropFix/) compatibility patcher first. Close the game, extract the ContentPlus release ZIP into the game folder, and merge its BepInEx directory. Launch through the configured BepInEx loader and check for `ContentPlus 0.5.1 loaded` in BepInEx/LogOutput.log. The ZIP also contains Thunderstore metadata; it is harmless outside the plugins directory.
+For manual installation, install BepInEx 6 IL2CPP and the [InfernoProtocolInteropFix](https://thunderstore.io/c/inferno-protocol/p/FrankMods/InfernoProtocolInteropFix/) compatibility patcher first. Close the game, extract the ContentPlus release ZIP into the game folder, and merge its BepInEx directory. Launch through the configured BepInEx loader and check for `ContentPlus 0.5.2 loaded` in BepInEx/LogOutput.log. The ZIP also contains Thunderstore metadata; it is harmless outside the plugins directory.
 
 Copy `InfernoProtocol.FieldQuests.dll` into `BepInEx/plugins/FieldQuests/`, then start the game normally through Steam. For local source builds, run from the mods folder:
 

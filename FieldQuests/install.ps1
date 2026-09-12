@@ -16,4 +16,4 @@ if (Test-Path -LiteralPath $target) {
 }
 Copy-Item -LiteralPath $source -Destination $target -Force
 if ((Get-FileHash -LiteralPath $source).Hash -ne (Get-FileHash -LiteralPath $target).Hash) { throw 'Installed DLL verification failed.' }
-Write-Output "Installed and verified ContentPlus 0.5.1 at $target"
+Write-Output "Installed and verified ContentPlus 0.5.2 at $target"

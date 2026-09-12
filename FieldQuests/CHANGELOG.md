@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2 - ContentPlus
+
+- Bug fixes and improvements.
+
 ## 0.5.1 - ContentPlus
 
 - Fixed creature kills not counting toward hunt quests.

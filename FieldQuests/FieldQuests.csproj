@@ -4,7 +4,7 @@
     <LangVersion>10</LangVersion>
     <Nullable>disable</Nullable>
     <AssemblyName>InfernoProtocol.FieldQuests</AssemblyName>
-    <Version>0.5.1</Version>
+    <Version>0.5.2</Version>
     <Product>ContentPlus</Product>
     <Authors>FrankMods</Authors>
     <Description>Quest board, XP progression and unlockable equipment finishes for Inferno Protocol.</Description>

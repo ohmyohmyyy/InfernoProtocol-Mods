@@ -1,6 +1,6 @@
 {
   "name": "ContentPlus",
-  "version_number": "0.5.1",
+  "version_number": "0.5.2",
   "website_url": "https://github.com/ohmyohmyyy/InfernoProtocol-Mods/tree/main/FieldQuests",
   "description": "Adds a quest board, supply contracts, creature hunts, XP levels and twelve unlockable equipment finishes with a cosmetic station.",
   "dependencies": ["FrankMods-InfernoProtocolInteropFix-1.0.0"]
