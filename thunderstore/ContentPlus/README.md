@@ -11,3 +11,7 @@ More reasons to explore, gather and build your character.
 Includes 24 authored quests; quests requiring unavailable game assets are hidden. Quests require ContentPlus on the host and participating players. Equipment finishes are visible locally only.
 
 [Full details, controls and setup](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/tree/main/FieldQuests)
+
+## Community and support
+
+For help, feedback, and bug reports, join the [FrankMods Discord](https://discord.gg/DBe7UWWDCD).

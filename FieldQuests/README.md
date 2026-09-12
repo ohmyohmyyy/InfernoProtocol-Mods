@@ -81,6 +81,10 @@ Twelve patterns: Woodland, Blue Circuit, Embercrack, Brasswork, Arctic Digital, 
 
 Mouse: click selections and Apply; wheel browses equipment. Controller: left/right changes finish, up/down chooses equipment, LB/RB changes equipment page, A/Cross applies, B/Circle closes. Choices in the menu are remembered for the current session; applied finishes persist in the world save.
 
+## Community and support
+
+For help, feedback, and bug reports, join the [FrankMods Discord](https://discord.gg/DBe7UWWDCD).
+
 ## Validation status
 
 See [TESTING.md](TESTING.md) for automated coverage and the in-game acceptance checklist. A successful build verifies APIs and logic; it does not prove runtime visuals, animation retargeting, controller behavior or a two-machine session.

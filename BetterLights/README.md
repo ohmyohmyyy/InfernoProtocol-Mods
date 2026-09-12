@@ -28,6 +28,10 @@ BetterLights includes an optional, host-authoritative synchronization layer. Com
 
 To see synchronized colors, both the host and connecting player need the same BetterLights version installed. Only the host can edit lights during a multiplayer session; clients display the host's choices.
 
+## Community and support
+
+For help, feedback, and bug reports, join the [FrankMods Discord](https://discord.gg/DBe7UWWDCD).
+
 ## Configuration
 
 Settings and saved per-torch colors are stored in:

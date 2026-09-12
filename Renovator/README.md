@@ -75,3 +75,7 @@ powershell -ExecutionPolicy Bypass -File Renovator/install.ps1
 Finish preferences are stored in `Renovator.v1.json` beside the world save. Invalid files are preserved and writes are disabled instead of silently replacing them.
 
 To uninstall, close the game and remove `BepInEx\plugins\Renovator`. Original visuals return on the next launch; the preferences file remains available if Renovator is installed again.
+
+## Community and support
+
+For help, feedback, and bug reports, join the [FrankMods Discord](https://discord.gg/DBe7UWWDCD).

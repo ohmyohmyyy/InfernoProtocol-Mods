@@ -4,6 +4,10 @@ All mods are free. If you'd like to support their development, [buy me a coffee]
 
 Independent gameplay and quality-of-life mods for [Inferno Protocol on Steam](https://store.steampowered.com/app/3908940/Inferno_Protocol/).
 
+## Community and support
+
+For help, feedback, bug reports, and mod updates, join the [FrankMods Discord](https://discord.gg/DBe7UWWDCD).
+
 | Mod | Version | What it changes | Latest release |
 | --- | --- | --- | --- |
 | BetterUI | 0.11.0 | Polishes crafting and building, displays exact hotbar durability, and presents genetics as an interactive DNA tree. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/BetterUI/) |

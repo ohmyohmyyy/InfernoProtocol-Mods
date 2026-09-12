@@ -29,6 +29,10 @@ Manual: install BepInEx 6 IL2CPP and [InfernoProtocolInteropFix](https://thunder
 
 Only the local player needs BetterUI. No genetics networking or save changes are made. Untested future game versions may require an update.
 
+## Community and support
+
+For help, feedback, and bug reports, join the [FrankMods Discord](https://discord.gg/DBe7UWWDCD).
+
 ## Validation
 
 Build: zero warnings/errors. 4,380 assertions cover layout, controller reachability and batched line geometry through 64 genes. Local gameplay logs confirm the panel opens with 28 native gene fields; the optimized build's clipping fix was tested in game. Broad resolution/accessibility and multiplayer testing is not exhaustive.

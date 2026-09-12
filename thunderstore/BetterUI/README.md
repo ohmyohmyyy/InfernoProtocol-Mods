@@ -19,3 +19,7 @@ Open genetics normally to explore your collection. This is a visual upgrade only
 Use the crafting footer's color-wheel button to change palettes. Press `F8` to pause or resume BetterUI for the current session.
 
 Full setup, configuration, compatibility, and troubleshooting details are available on [GitHub](https://github.com/ohmyohmyyy/InfernoProtocol-Mods#betterui).
+
+## Community and support
+
+For help, feedback, and bug reports, join the [FrankMods Discord](https://discord.gg/DBe7UWWDCD).
