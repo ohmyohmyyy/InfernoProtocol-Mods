@@ -28,7 +28,7 @@ The script verifies each manifest, dependency, DLL version, icon dimensions and 
 
 Upload each ZIP separately to the **Inferno Protocol** community through the Thunderstore package upload page:
 
-- `BetterUI-0.11.0.zip`
+- `BetterUI-0.12.0.zip`
 - `UtilityWheel-0.2.3.zip`
 - `BetterLights-0.3.3.zip`
 - `Renovator-0.6.0.zip`

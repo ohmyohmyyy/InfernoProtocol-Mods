@@ -1,6 +1,6 @@
 # BetterUI
 
-Refined crafting and building menus, exact hotbar durability, and a living DNA tree for your acquired genetics.
+Refined crafting, building, and trader menus, exact hotbar durability, and a living DNA tree for your acquired genetics.
 
 ## Features
 
@@ -8,6 +8,7 @@ Refined crafting and building menus, exact hotbar durability, and a living DNA t
 - Search and live recipe availability updates.
 - Integrated fabrication progress.
 - A streamlined building catalog with search, categories, plan inspection, and material requirements.
+- A compact trader exchange with searchable offers, clear affordability states, and native trade behavior.
 - Exact durability values beneath durable hotbar items.
 - Five selectable color palettes that persist between sessions.
 - Restores the hand-crafting launcher correctly after closing the menu.

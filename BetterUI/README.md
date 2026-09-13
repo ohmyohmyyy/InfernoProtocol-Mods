@@ -1,6 +1,6 @@
-# BetterUI 0.11.0
+# BetterUI 0.12.0
 
-Polished crafting and building menus plus a compact genetics tree for Inferno Protocol. This mod changes presentation only, not crafting costs/times, construction rules, gene acquisition, gene stages or effects.
+Polished crafting, building, and trader menus plus a compact genetics tree for Inferno Protocol. This mod changes presentation only, not crafting costs/times, construction rules, trade data, gene acquisition, gene stages or effects.
 
 ## Genetics
 
@@ -20,6 +20,10 @@ Recipe search, clearer ingredients/categories, larger icons, integrated crafting
 ## Building
 
 The hammer's building catalog now uses the same BetterUI language: a category rail, searchable two-column plan browser, readable material cards, and a larger placement workspace. Its palette is shared with crafting, while the original recipe, resource, unlock, mouse, and controller behavior remains authoritative.
+
+## Trading
+
+The trader now opens in a compact BetterUI exchange with searchable offers, clear available and unavailable states, aligned costs and rewards, and the shared palette controls. Native inventory, affordability, stock, filtering, and trade callbacks remain authoritative.
 
 ## Installation
 

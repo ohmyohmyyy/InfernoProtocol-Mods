@@ -1,5 +1,9 @@
 # Changelog
 
+## BetterUI 0.12.0 - 2026-09-13
+
+- Now includes Trader UI.
+
 ## Renovator 0.6.0 - 2026-09-12
 
 - Adds host-authoritative synchronization for committed surface finishes and accepted object moves.

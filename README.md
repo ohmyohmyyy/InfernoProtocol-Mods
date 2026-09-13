@@ -10,7 +10,7 @@ For help, feedback, bug reports, and mod updates, join the [FrankMods Discord](h
 
 | Mod | Version | What it changes | Latest release |
 | --- | --- | --- | --- |
-| BetterUI | 0.11.0 | Polishes crafting and building, displays exact hotbar durability, and presents genetics as an interactive DNA tree. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/BetterUI/) |
+| BetterUI | 0.12.0 | Polishes crafting, building, and trading, displays exact hotbar durability, and presents genetics as an interactive DNA tree. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/BetterUI/) |
 | Utility Wheel | 0.2.3 | Adds a translucent controller radial menu for occupied hotbar slots. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/UtilityWheel/) |
 | BetterLights | 0.3.6 | Customizes individual torch and lantern colors with controller and mouse support. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/BetterLights/) |
 | [ContentPlus](FieldQuests/README.md) | 0.5.2 | Adds a quest board, XP progression and twelve unlockable equipment finishes. | [Thunderstore](https://thunderstore.io/c/inferno-protocol/p/FrankMods/ContentPlus/) |
@@ -61,7 +61,7 @@ Do not place the release ZIP itself in `BepInEx\plugins`. Extract it first.
 
 ## BetterUI
 
-BetterUI refines crafting, building, hotbar durability, and the genetics panel without changing gameplay. Acquired genes appear in a compact DNA tree with mouse/controller navigation, pan/zoom and reduced-motion support. [Full BetterUI details and setup](BetterUI/README.md).
+BetterUI refines crafting, building, trading, hotbar durability, and the genetics panel without changing gameplay. Acquired genes appear in a compact DNA tree with mouse/controller navigation, pan/zoom and reduced-motion support. [Full BetterUI details and setup](BetterUI/README.md).
 
 Features include:
 

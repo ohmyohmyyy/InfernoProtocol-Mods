@@ -1,29 +1,35 @@
 using System;
 using Game.UI;
+using Game.UI.Trade;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace InfernoProtocol.BetterUI;
 
 /// <summary>
-/// Styles crafting, building, the explicitly opened genetics panel, and the
-/// compact durability readout on the player's hotbar.
+/// Styles crafting, building, trading, the explicitly opened genetics panel,
+/// and the compact durability readout on the player's hotbar.
 /// </summary>
 public sealed class BetterUIController : MonoBehaviour
 {
     private readonly CraftingMenuOverhaul _craftingMenu = new();
     private readonly BuildingMenuOverhaul _buildingMenu = new();
+    private readonly TraderMenuOverhaul _traderMenu = new();
     private readonly GeneticsTree _genetics = new();
     private readonly HotbarDurabilityDisplay _hotbarDurability = new();
     private float _nextRefresh;
     private float _nextBuildingRefresh;
     private float _retryAt;
     private float _buildingRetryAt;
+    private float _nextTraderRefresh;
+    private float _traderRetryAt;
     private bool _sessionEnabled = true;
     private bool _craftingOpen;
     private bool _buildingOpen;
+    private bool _traderOpen;
     private bool _failureReported;
     private bool _buildingFailureReported;
+    private bool _traderFailureReported;
 
     public BetterUIController(IntPtr pointer) : base(pointer)
     {
@@ -38,6 +44,44 @@ public sealed class BetterUIController : MonoBehaviour
         _hotbarDurability.Tick(enabled);
         UpdateCrafting(enabled);
         UpdateBuilding(enabled);
+        UpdateTrader(enabled);
+    }
+
+    private void UpdateTrader(bool enabled)
+    {
+        if (!enabled || !BetterUIPlugin.TraderEnabled.Value || !_traderOpen)
+        {
+            _traderMenu.SetVisible(false);
+            return;
+        }
+
+        TradeUI trader = TradeUI.instance;
+        if (trader == null)
+        {
+            _traderMenu.SetVisible(false);
+            return;
+        }
+
+        _traderMenu.SetVisible(true);
+        if (_traderMenu.HandleInput()) _nextTraderRefresh = 0f;
+        float now = Time.unscaledTime;
+        if (now < _nextTraderRefresh || now < _traderRetryAt) return;
+        _nextTraderRefresh = now + BetterUIPlugin.RefreshSeconds;
+        try
+        {
+            _traderMenu.Apply(trader);
+            _traderRetryAt = 0f;
+            _traderFailureReported = false;
+        }
+        catch (Exception exception)
+        {
+            _traderRetryAt = now + 2f;
+            if (!_traderFailureReported)
+            {
+                _traderFailureReported = true;
+                BetterUIPlugin.ModLog.LogWarning($"Could not style the trader menu; retrying: {exception}");
+            }
+        }
     }
 
     private void UpdateCrafting(bool enabled)
@@ -135,12 +179,14 @@ public sealed class BetterUIController : MonoBehaviour
         {
             _craftingMenu.SetVisible(false);
             _buildingMenu.SetVisible(false);
+            _traderMenu.SetVisible(false);
         }
 
         BetterUIPlugin.ModLog.LogInfo(
             $"BetterUI menus {(_sessionEnabled ? "enabled" : "paused")} for this session");
         _nextRefresh = 0f;
         _nextBuildingRefresh = 0f;
+        _nextTraderRefresh = 0f;
     }
 
     internal void SetBuildingOpen(bool open)
@@ -199,6 +245,36 @@ public sealed class BetterUIController : MonoBehaviour
         {
             _craftingMenu.SetVisible(false);
         }
+    }
+
+    internal void PrepareTraderMenu(TradeUI trader)
+    {
+        if (!_sessionEnabled || !BetterUIPlugin.Enabled.Value || !BetterUIPlugin.TraderEnabled.Value || trader == null)
+            return;
+        try
+        {
+            _traderMenu.Prepare(trader);
+        }
+        catch (Exception exception)
+        {
+            if (!_traderFailureReported)
+            {
+                _traderFailureReported = true;
+                BetterUIPlugin.ModLog.LogWarning($"Could not prepare the trader menu: {exception}");
+            }
+        }
+    }
+
+    internal void SetTraderOpen(bool open)
+    {
+        _traderOpen = open;
+        _nextTraderRefresh = 0f;
+        if (!open) _traderMenu.SetVisible(false);
+    }
+
+    internal void InvalidateTrader()
+    {
+        _nextTraderRefresh = 0f;
     }
 
     private void OnDestroy()

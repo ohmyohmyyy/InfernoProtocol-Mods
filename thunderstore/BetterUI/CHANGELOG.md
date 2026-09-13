@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.0
+
+- Now includes Trader UI.
+
 ## 0.11.0
 
 - Added building UI.

@@ -4,6 +4,7 @@ using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using Game.UI;
 using Game.LevelOperations;
+using Game.UI.Trade;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
@@ -21,6 +22,7 @@ public sealed class BetterUIPlugin : BasePlugin
     internal static ConfigEntry<bool> Enabled { get; private set; }
     internal static ConfigEntry<bool> GeneticsEnabled { get; private set; }
     internal static ConfigEntry<bool> GeneticsReducedMotion { get; private set; }
+    internal static ConfigEntry<bool> TraderEnabled { get; private set; }
     internal static ConfigEntry<float> RefreshInterval { get; private set; }
     internal static ConfigEntry<int> ColorPalette { get; private set; }
     internal static float RefreshSeconds => Sanitize(RefreshInterval.Value, 0.5f, 0.2f, 5f);
@@ -32,17 +34,19 @@ public sealed class BetterUIPlugin : BasePlugin
     {
         ModLog = Log;
         Enabled = Config.Bind("General", "Enabled", true,
-            "Enables BetterUI crafting, building and genetics presentation. F8 pauses or resumes it for the current session.");
+            "Enables BetterUI crafting, building, trader and genetics presentation. F8 pauses or resumes it for the current session.");
         GeneticsEnabled = Config.Bind("Genetics", "Enabled", true,
             "Displays acquired genetics as a navigable DNA tree. Presentation only; disable to keep the original genetics list.");
         GeneticsReducedMotion = Config.Bind("Genetics", "ReducedMotion", false,
             "Disables decorative DNA motion and uses immediate focus transitions in the genetics panel.");
+        TraderEnabled = Config.Bind("Trader", "Enabled", true,
+            "Displays the native trader inside the BetterUI exchange interface.");
         RefreshInterval = Config.Bind(
             "General",
             "RefreshInterval",
             0.5f,
             new ConfigDescription(
-                "Seconds between lightweight crafting and building menu state refreshes.",
+                "Seconds between lightweight crafting, building and trader menu state refreshes.",
                 new AcceptableValueRange<float>(0.2f, 5f)));
         ColorPalette = Config.Bind(
             "Crafting",
@@ -58,15 +62,18 @@ public sealed class BetterUIPlugin : BasePlugin
         _harmony.PatchAll(typeof(CraftingVisibilityPatches));
         _harmony.PatchAll(typeof(BuildingVisibilityPatches));
         _harmony.PatchAll(typeof(GeneticsRefreshPatches));
+        _harmony.PatchAll(typeof(TraderVisibilityPatches));
         Log.LogInfo($"{PluginInfo.Name} {PluginInfo.Version} loaded");
         Log.LogInfo("Genetics tree: compact organic layout, read-only gene display and reduced-motion support.");
         Log.LogInfo("GeneUI: batched branches, cached panel and event-driven gene refresh.");
         Log.LogInfo("Building catalog: unified BetterUI filters, plan browser and material inspection.");
+        Log.LogInfo("Trader exchange: native offers and callbacks inside a responsive BetterUI shell.");
     }
 
     public override bool Unload()
     {
         SetBuildingOpen(false);
+        SetTraderOpen(false);
         _harmony?.UnpatchSelf();
         _harmony = null;
 
@@ -130,6 +137,21 @@ public sealed class BetterUIPlugin : BasePlugin
         _controller?.InvalidateBuilding();
     }
 
+    internal static void PrepareTraderMenu(TradeUI trader)
+    {
+        _controller?.PrepareTraderMenu(trader);
+    }
+
+    internal static void SetTraderOpen(bool open)
+    {
+        _controller?.SetTraderOpen(open);
+    }
+
+    internal static void InvalidateTrader()
+    {
+        _controller?.InvalidateTrader();
+    }
+
     internal static void CyclePalette()
     {
         if (ColorPalette == null)
@@ -185,6 +207,62 @@ public sealed class BetterUIPlugin : BasePlugin
         private static void AfterHideRaw()
         {
             SetCraftingOpen(false);
+        }
+    }
+
+    [HarmonyPatch]
+    private static class TraderVisibilityPatches
+    {
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TradeUI), nameof(TradeUI.Open))]
+        private static void BeforeOpen(TradeUI __instance)
+        {
+            PrepareTraderMenu(__instance);
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(TradeUI), nameof(TradeUI.Open))]
+        private static void AfterOpen()
+        {
+            SetTraderOpen(true);
+            InvalidateTrader();
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(TradeUI), nameof(TradeUI.Close))]
+        private static void AfterClose()
+        {
+            SetTraderOpen(false);
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(TradeUI), nameof(TradeUI.OnDisable))]
+        private static void AfterDisable()
+        {
+            SetTraderOpen(false);
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(TradeUI), nameof(TradeUI.Refresh))]
+        private static void AfterRefresh() { InvalidateTrader(); }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(TradeUI), nameof(TradeUI.ApplyFilters))]
+        private static void AfterFiltersChanged() { InvalidateTrader(); }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(TradeUI), nameof(TradeUI.OnTradeButtonClicked))]
+        private static void AfterTrade() { InvalidateTrader(); }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(TradeUI), nameof(TradeUI.ToggleHideUntradable))]
+        private static void AfterAvailabilityToggle() { InvalidateTrader(); }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(TradeUI), nameof(TradeUI.OnGetField))]
+        private static void AfterFieldCreated()
+        {
+            InvalidateTrader();
         }
     }
 
