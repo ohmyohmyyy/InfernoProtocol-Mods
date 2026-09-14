@@ -1,7 +1,7 @@
 param(
     [string]$GameDir = 'C:\Program Files (x86)\Steam\steamapps\common\Inferno Protocol',
     [switch]$SkipBuild,
-    [ValidateSet('BetterUI','UtilityWheel','BetterLights','Renovator','InfernoProtocolInteropFix')]
+    [ValidateSet('FrankModsCore','BetterUI','UtilityWheel','BetterLights','Renovator','InfernoProtocolInteropFix')]
     [string[]]$Only
 )
 
@@ -13,14 +13,23 @@ $outputRoot = Join-Path $repoRoot 'dist\thunderstore'
 $stagingRoot = Join-Path $outputRoot 'staging'
 $bepInExDependency = 'BepInEx-BepInExPack_IL2CPP-6.0.755'
 $interopFixDependency = 'FrankMods-InfernoProtocolInteropFix-1.0.0'
+$frankModsCoreDependency = 'FrankMods-FrankModsCore-1.0.0'
 
 $packages = @(
+    [pscustomobject]@{
+        Folder = 'FrankModsCore'
+        DllName = 'FrankMods.Core.dll'
+        DllPath = Join-Path $repoRoot 'FrankModsCore\bin\Release\net6.0\FrankMods.Core.dll'
+        InstallPath = 'BepInEx\plugins\FrankModsCore'
+        Dependency = $interopFixDependency
+        ExtraFiles = @()
+    },
     [pscustomobject]@{
         Folder = 'BetterUI'
         DllName = 'InfernoProtocol.BetterUI.dll'
         DllPath = Join-Path $repoRoot 'BetterUI\bin\Release\net6.0\InfernoProtocol.BetterUI.dll'
         InstallPath = 'BepInEx\plugins\BetterUI'
-        Dependency = $interopFixDependency
+        Dependency = $frankModsCoreDependency
         ExtraFiles = @()
     },
     [pscustomobject]@{
@@ -28,7 +37,7 @@ $packages = @(
         DllName = 'InfernoProtocol.UtilityWheel.dll'
         DllPath = Join-Path $repoRoot 'UtilityWheel\bin\Release\net6.0\InfernoProtocol.UtilityWheel.dll'
         InstallPath = 'BepInEx\plugins\UtilityWheel'
-        Dependency = $interopFixDependency
+        Dependency = $frankModsCoreDependency
         ExtraFiles = @()
     },
     [pscustomobject]@{
@@ -36,7 +45,7 @@ $packages = @(
         DllName = 'InfernoProtocol.BetterLights.dll'
         DllPath = Join-Path $repoRoot 'BetterLights\bin\Release\net6.0\InfernoProtocol.BetterLights.dll'
         InstallPath = 'BepInEx\plugins\BetterLights'
-        Dependency = $interopFixDependency
+        Dependency = $frankModsCoreDependency
         ExtraFiles = @()
     },
     [pscustomobject]@{
@@ -44,7 +53,7 @@ $packages = @(
         DllName = 'InfernoProtocol.Renovator.dll'
         DllPath = Join-Path $repoRoot 'Renovator\bin\Release\net6.0\InfernoProtocol.Renovator.dll'
         InstallPath = 'BepInEx\plugins\Renovator'
-        Dependency = $interopFixDependency
+        Dependency = $frankModsCoreDependency
         ExtraFiles = @()
     },
     [pscustomobject]@{

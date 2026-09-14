@@ -12,6 +12,8 @@ Renovator expands building customization with post-placement editing and curated
 
 Hold the **Building Hammer**, look at a player-placed object within 2.7 metres, and press **F6**, **middle mouse**, or **R3**. Choose **Surface finishes** or **Move & rotate**.
 
+Open **Mod Settings** from the pause menu to remap the keyboard and controller editor shortcuts.
+
 Editing remains host-authoritative. Connected players need Renovator 0.6.0 or later to see synchronized finishes and live post-placement moves. Clients without Renovator receive no custom traffic.
 
 [Full controls and details](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/tree/main/Renovator)

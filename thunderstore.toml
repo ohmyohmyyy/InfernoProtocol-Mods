@@ -1,0 +1,29 @@
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "FrankMods"
+name = "FrankModsCore"
+versionNumber = "1.0.0"
+description = "Shared pause-menu settings and input remapping support for FrankMods releases."
+websiteUrl = "https://github.com/ohmyohmyyy/InfernoProtocol-Mods"
+containsNsfwContent = false
+
+[package.dependencies]
+FrankMods-InfernoProtocolInteropFix = "1.0.0"
+
+[build]
+icon = "./thunderstore/FrankModsCore/icon.png"
+readme = "./thunderstore/FrankModsCore/README.md"
+outdir = "./dist/tcli"
+
+[[build.copy]]
+source = "./FrankModsCore/bin/Release/net6.0/FrankMods.Core.dll"
+target = "BepInEx/plugins/FrankModsCore/FrankMods.Core.dll"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = [ "inferno-protocol" ]
+
+[publish.categories]
+inferno-protocol = [ "mods" ]

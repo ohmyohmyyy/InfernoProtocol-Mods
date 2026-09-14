@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.7 - 2026-09-13
+
+- Added Remapping support
+
 ## 0.3.5 - 2026-09-12
 
 - Removed recurring full-world light scans and optimized nearby targeting.

@@ -4,8 +4,10 @@ if (Get-Process -Name 'Inferno Protocol' -ErrorAction SilentlyContinue) {
     throw 'Close Inferno Protocol before installing FieldQuests.'
 }
 $source = Join-Path $PSScriptRoot 'bin\Release\net6.0\InfernoProtocol.FieldQuests.dll'
+$coreSource = Join-Path $PSScriptRoot 'bin\Release\net6.0\FrankMods.Core.dll'
 if (-not (Test-Path -LiteralPath $source)) { throw 'Run FieldQuests\build.ps1 first.' }
 $pluginDir = Join-Path $GameDir 'BepInEx\plugins\FieldQuests'
+$coreDir = Join-Path $GameDir 'BepInEx\plugins\FrankModsCore'
 if (-not (Test-Path -LiteralPath (Join-Path $GameDir 'BepInEx\core\BepInEx.Unity.IL2CPP.dll'))) { throw 'BepInEx 6 IL2CPP is missing.' }
 New-Item -ItemType Directory -Force -Path $pluginDir | Out-Null
 $target = Join-Path $pluginDir 'InfernoProtocol.FieldQuests.dll'
@@ -15,5 +17,8 @@ if (Test-Path -LiteralPath $target) {
     Copy-Item -LiteralPath $target -Destination (Join-Path $backupDir ('FieldQuests-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.dll'))
 }
 Copy-Item -LiteralPath $source -Destination $target -Force
+if (-not (Test-Path -LiteralPath $coreSource)) { throw 'FrankMods Core build output is missing.' }
+New-Item -ItemType Directory -Force -Path $coreDir | Out-Null
+Copy-Item -LiteralPath $coreSource -Destination (Join-Path $coreDir 'FrankMods.Core.dll') -Force
 if ((Get-FileHash -LiteralPath $source).Hash -ne (Get-FileHash -LiteralPath $target).Hash) { throw 'Installed DLL verification failed.' }
-Write-Output "Installed and verified ContentPlus 0.5.2 at $target"
+Write-Output "Installed and verified ContentPlus 0.5.3 at $target"

@@ -9,6 +9,8 @@ A translucent radial selector for every occupied, visible hotbar slot—not just
 
 The activation button and keyboard fallback are configurable. Utility Wheel also matches BetterUI's selected palette when BetterUI is installed.
 
+Open **Mod Settings** from the pause menu to remap the keyboard and controller activation buttons.
+
 Full setup, configuration, compatibility, and troubleshooting details are available on [GitHub](https://github.com/ohmyohmyyy/InfernoProtocol-Mods#utility-wheel).
 
 ## Community and support

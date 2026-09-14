@@ -17,7 +17,7 @@ $meta = Join-Path $repo "thunderstore\$Mod"
 $manifest = Get-Content -LiteralPath (Join-Path $meta 'manifest.json') -Raw | ConvertFrom-Json
 if ($manifest.name -ne $Mod -or $manifest.version_number -notmatch '^\d+\.\d+\.\d+$' -or
     $manifest.description.Length -gt 250 -or [string]::IsNullOrWhiteSpace($manifest.description) -or
-    @($manifest.dependencies).Count -ne 1 -or $manifest.dependencies[0] -ne 'FrankMods-InfernoProtocolInteropFix-1.0.0') {
+    @($manifest.dependencies).Count -ne 1 -or $manifest.dependencies[0] -ne 'FrankMods-FrankModsCore-1.0.0') {
     throw "Invalid $Mod manifest."
 }
 $project = if ($Mod -eq 'BetterUI') { 'BetterUI' } else { 'FieldQuests' }

@@ -4,7 +4,7 @@
     <LangVersion>10</LangVersion>
     <Nullable>disable</Nullable>
     <AssemblyName>InfernoProtocol.FieldQuests</AssemblyName>
-    <Version>0.5.2</Version>
+    <Version>0.5.3</Version>
     <Product>ContentPlus</Product>
     <Authors>FrankMods</Authors>
     <Description>Quest board, XP progression and unlockable equipment finishes for Inferno Protocol.</Description>
@@ -14,6 +14,7 @@
     <Interop>$(GameDir)\BepInEx\interop</Interop>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\FrankModsCore\FrankModsCore.csproj" />
     <Reference Include="$(Core)\BepInEx.Core.dll" Private="false" />
     <Reference Include="$(Core)\BepInEx.Unity.IL2CPP.dll" Private="false" />
     <Reference Include="$(Core)\Il2CppInterop.Runtime.dll" Private="false" />

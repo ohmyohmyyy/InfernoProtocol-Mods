@@ -7,9 +7,9 @@
     <AssemblyName>InfernoProtocol.BetterUI</AssemblyName>
     <RootNamespace>InfernoProtocol.BetterUI</RootNamespace>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>0.12.0</Version>
-    <FileVersion>0.12.0.0</FileVersion>
-    <AssemblyVersion>0.12.0.0</AssemblyVersion>
+    <Version>0.12.1</Version>
+    <FileVersion>0.12.1.0</FileVersion>
+    <AssemblyVersion>0.12.1.0</AssemblyVersion>
     <Deterministic>true</Deterministic>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <DebugType>portable</DebugType>
@@ -19,6 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FrankModsCore\FrankModsCore.csproj" />
     <Reference Include="BepInEx.Core" HintPath="$(BepInExCore)\BepInEx.Core.dll" Private="false" />
     <Reference Include="BepInEx.Unity.IL2CPP" HintPath="$(BepInExCore)\BepInEx.Unity.IL2CPP.dll" Private="false" />
     <Reference Include="0Harmony" HintPath="$(BepInExCore)\0Harmony.dll" Private="false" />

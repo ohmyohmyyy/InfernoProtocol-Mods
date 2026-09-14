@@ -4,12 +4,16 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
+using FrankMods;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 namespace InfernoProtocol.BetterLights;
 
 
 [BepInPlugin(PluginInfo.Guid, PluginInfo.Name, PluginInfo.Version)]
+[BepInDependency(FrankModsCorePlugin.Guid, FrankModsCorePlugin.Version)]
 public sealed class BetterLightsPlugin : BasePlugin
 {
     private static readonly Dictionary<string, string> TorchColors = new(StringComparer.Ordinal);
@@ -22,6 +26,8 @@ public sealed class BetterLightsPlugin : BasePlugin
     internal static ConfigEntry<float> AimThreshold { get; private set; }
     internal static ConfigEntry<float> StickDeadzone { get; private set; }
     internal static ConfigEntry<bool> KeyboardFallback { get; private set; }
+    internal static ConfigEntry<Key> PickerKeyboardKey { get; private set; }
+    internal static ConfigEntry<GamepadButton> PickerControllerButton { get; private set; }
 
     public override void Load()
     {
@@ -52,7 +58,17 @@ public sealed class BetterLightsPlugin : BasePlugin
             "Interaction",
             "KeyboardFallback",
             true,
-            "Allows F7 and arrow-key control in addition to the controller controls.");
+            "Allows the remappable keyboard shortcut and arrow-key control in addition to the controller controls.");
+        PickerKeyboardKey = Config.Bind(
+            "Interaction",
+            "PickerKeyboardKey",
+            Key.F7,
+            "Keyboard shortcut used to open and save the BetterLights color picker.");
+        PickerControllerButton = Config.Bind(
+            "Interaction",
+            "PickerControllerButton",
+            GamepadButton.RightStick,
+            "Controller shortcut used to open and save the BetterLights color picker.");
         _savedTorchColors = Config.Bind(
             "Persistence",
             "TorchColors",
@@ -60,12 +76,29 @@ public sealed class BetterLightsPlugin : BasePlugin
             "Per-light colors managed by BetterLights. Editing this value manually is not recommended.");
 
         LoadSavedColors();
+        ModSettingsRegistry.RegisterKeyBinding(
+            PluginInfo.Guid,
+            PluginInfo.Name,
+            "PickerKeyboardKey",
+            "Open / save color picker",
+            Key.F7,
+            () => PickerKeyboardKey.Value,
+            key => PickerKeyboardKey.Value = key);
+        ModSettingsRegistry.RegisterGamepadBinding(
+            PluginInfo.Guid,
+            PluginInfo.Name,
+            "PickerControllerButton",
+            "Open / save color picker",
+            GamepadButton.RightStick,
+            () => PickerControllerButton.Value,
+            button => PickerControllerButton.Value = button);
         _controller = AddComponent<BetterLightsController>();
         Log.LogInfo($"{PluginInfo.Name} {PluginInfo.Version} loaded");
     }
 
     public override bool Unload()
     {
+        ModSettingsRegistry.UnregisterMod(PluginInfo.Guid);
         if (_controller != null)
         {
             UnityEngine.Object.Destroy(_controller);
@@ -74,6 +107,45 @@ public sealed class BetterLightsPlugin : BasePlugin
 
         return true;
     }
+
+    internal static bool PickerKeyPressed(Keyboard keyboard)
+    {
+        if (!KeyboardFallback.Value || keyboard == null || PickerKeyboardKey == null || PickerKeyboardKey.Value == Key.None)
+            return false;
+        try { return keyboard[PickerKeyboardKey.Value].wasPressedThisFrame; }
+        catch { return false; }
+    }
+
+    internal static string PickerKeyName
+    {
+        get
+        {
+            string value = PickerKeyboardKey?.Value.ToString() ?? "F7";
+            if (value.StartsWith("Digit", StringComparison.Ordinal)) return value.Substring(5);
+            return value.ToUpperInvariant();
+        }
+    }
+
+    internal static bool PickerControllerPressed(Gamepad gamepad)
+    {
+        if (gamepad == null || PickerControllerButton == null) return false;
+        try { return gamepad[PickerControllerButton.Value].wasPressedThisFrame; }
+        catch { return false; }
+    }
+
+    internal static string PickerControllerName => GamepadButtonName(PickerControllerButton?.Value ?? GamepadButton.RightStick);
+
+    private static string GamepadButtonName(GamepadButton button) => button switch
+    {
+        GamepadButton.South => "A", GamepadButton.East => "B", GamepadButton.West => "X", GamepadButton.North => "Y",
+        GamepadButton.LeftShoulder => "LB", GamepadButton.RightShoulder => "RB",
+        GamepadButton.LeftTrigger => "LT", GamepadButton.RightTrigger => "RT",
+        GamepadButton.LeftStick => "L3", GamepadButton.RightStick => "R3",
+        GamepadButton.Start => "MENU", GamepadButton.Select => "VIEW",
+        GamepadButton.DpadUp => "D-PAD UP", GamepadButton.DpadDown => "D-PAD DOWN",
+        GamepadButton.DpadLeft => "D-PAD LEFT", GamepadButton.DpadRight => "D-PAD RIGHT",
+        _ => button.ToString().ToUpperInvariant()
+    };
 
     internal static string GetTorchKey(APlacable torch)
     {

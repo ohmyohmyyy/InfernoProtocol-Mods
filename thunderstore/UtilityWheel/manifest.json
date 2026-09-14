@@ -1,0 +1,9 @@
+{
+  "name": "UtilityWheel",
+  "version_number": "0.2.4",
+  "website_url": "https://github.com/ohmyohmyyy/InfernoProtocol-Mods",
+  "description": "A controller-first radial menu for quickly selecting occupied hotbar items.",
+  "dependencies": [
+    "FrankMods-FrankModsCore-1.0.0"
+  ]
+}

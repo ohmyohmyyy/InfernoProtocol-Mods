@@ -10,6 +10,8 @@ More reasons to explore, gather and build your character.
 
 Includes 24 authored quests; quests requiring unavailable game assets are hidden. Quests require ContentPlus on the host and participating players. Equipment finishes are visible locally only.
 
+Open **Mod Settings** from the pause menu to remap the optional keyboard shortcut. Controller interaction continues to use the game's native Interact binding.
+
 [Full details, controls and setup](https://github.com/ohmyohmyyy/InfernoProtocol-Mods/tree/main/FieldQuests)
 
 ## Community and support

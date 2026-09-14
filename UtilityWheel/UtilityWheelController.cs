@@ -57,12 +57,9 @@ public sealed class UtilityWheelController : MonoBehaviour
         get
         {
             Gamepad gamepad = Gamepad.current;
-            bool held = gamepad != null &&
-                (UtilityWheelPlugin.ControllerButton.Value == ControllerWheelButton.RightShoulder
-                    ? gamepad.rightShoulder.isPressed
-                    : gamepad.leftShoulder.isPressed);
+            bool held = UtilityWheelPlugin.ControllerButtonHeld(gamepad);
             Keyboard keyboard = Keyboard.current;
-            return held || (UtilityWheelPlugin.KeyboardFallback.Value && keyboard != null && keyboard.tabKey.isPressed);
+            return held || UtilityWheelPlugin.KeyboardKeyHeld(keyboard);
         }
     }
 
@@ -210,7 +207,7 @@ public sealed class UtilityWheelController : MonoBehaviour
         try
         {
             return Player.isLocalPlayerLoaded && Player.localPlayer != null && !Cursor.visible &&
-                   !PlayerInventoryUI.isOpen && !SkillWheelManager.isOpen;
+                   !PlayerInventoryUI.isOpen && !SkillWheelManager.isOpen && !IsExternalEditorOpen();
         }
         catch
         {
@@ -222,12 +219,21 @@ public sealed class UtilityWheelController : MonoBehaviour
     {
         try
         {
-            return Player.localPlayer != null && !Cursor.visible && !PlayerInventoryUI.isOpen;
+            return Player.localPlayer != null && !Cursor.visible && !PlayerInventoryUI.isOpen &&
+                   !IsExternalEditorOpen();
         }
         catch
         {
             return false;
         }
+    }
+
+    private static bool IsExternalEditorOpen()
+    {
+        // Optional editors expose active scene markers while they own controls.
+        // This avoids hard assembly dependencies between independently installed mods.
+        return GameObject.Find("Artistic_InputBlocker") != null ||
+               GameObject.Find("Renovator_InputBlocker") != null;
     }
 
     private static void ReadActivation(out bool held, out bool pressed)
@@ -237,18 +243,15 @@ public sealed class UtilityWheelController : MonoBehaviour
         Gamepad gamepad = Gamepad.current;
         if (gamepad != null)
         {
-            ButtonControl control = UtilityWheelPlugin.ControllerButton.Value == ControllerWheelButton.RightShoulder
-                ? gamepad.rightShoulder
-                : gamepad.leftShoulder;
-            held = control.isPressed;
-            pressed = control.wasPressedThisFrame;
+            held = UtilityWheelPlugin.ControllerButtonHeld(gamepad);
+            pressed = UtilityWheelPlugin.ControllerButtonPressed(gamepad);
         }
 
         Keyboard keyboard = Keyboard.current;
         if (UtilityWheelPlugin.KeyboardFallback.Value && keyboard != null)
         {
-            held |= keyboard.tabKey.isPressed;
-            pressed |= keyboard.tabKey.wasPressedThisFrame;
+            held |= UtilityWheelPlugin.KeyboardKeyHeld(keyboard);
+            pressed |= UtilityWheelPlugin.KeyboardKeyPressed(keyboard);
         }
     }
 
@@ -568,8 +571,7 @@ public sealed class UtilityWheelController : MonoBehaviour
         }
     }
 
-    private static string ButtonHint =>
-        UtilityWheelPlugin.ControllerButton.Value == ControllerWheelButton.RightShoulder ? "RB" : "LB";
+    private static string ButtonHint => UtilityWheelPlugin.ControllerButtonName;
 
     private Sprite[] GetSectorSprites(int count)
     {

@@ -1,9 +1,9 @@
 {
   "name": "BetterLights",
-  "version_number": "0.3.6",
+  "version_number": "0.3.7",
   "website_url": "https://github.com/ohmyohmyyy/InfernoProtocol-Mods",
   "description": "Customize individual torch and lantern colors with controller or mouse controls.",
   "dependencies": [
-    "FrankMods-InfernoProtocolInteropFix-1.0.0"
+    "FrankMods-FrankModsCore-1.0.0"
   ]
 }

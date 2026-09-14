@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <LangVersion>10.0</LangVersion>
+    <AssemblyName>FrankMods.Core</AssemblyName>
+    <RootNamespace>FrankMods</RootNamespace>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Deterministic>true</Deterministic>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Inferno Protocol</GameDir>
+    <Core>$(GameDir)\BepInEx\core</Core>
+    <Interop>$(GameDir)\BepInEx\interop</Interop>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="BepInEx.Core" HintPath="$(Core)\BepInEx.Core.dll" Private="false" />
+    <Reference Include="BepInEx.Unity.IL2CPP" HintPath="$(Core)\BepInEx.Unity.IL2CPP.dll" Private="false" />
+    <Reference Include="Il2CppInterop.Runtime" HintPath="$(Core)\Il2CppInterop.Runtime.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(Core)\0Harmony.dll" Private="false" />
+    <Reference Include="Assembly-CSharp" HintPath="$(Interop)\Assembly-CSharp.dll" Private="false" />
+    <Reference Include="Il2Cppmscorlib" HintPath="$(Interop)\Il2Cppmscorlib.dll" Private="false" />
+    <Reference Include="Il2CppSystem" HintPath="$(Interop)\Il2CppSystem.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(Interop)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="Unity.InputSystem" HintPath="$(Interop)\Unity.InputSystem.dll" Private="false" />
+    <Reference Include="UnityEngine.UI" HintPath="$(Interop)\UnityEngine.UI.dll" Private="false" />
+    <Reference Include="UnityEngine.UIModule" HintPath="$(Interop)\UnityEngine.UIModule.dll" Private="false" />
+    <Reference Include="UnityEngine.TextRenderingModule" HintPath="$(Interop)\UnityEngine.TextRenderingModule.dll" Private="false" />
+    <Reference Include="Unity.TextMeshPro" HintPath="$(Interop)\Unity.TextMeshPro.dll" Private="false" />
+  </ItemGroup>
+</Project>

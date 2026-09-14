@@ -13,7 +13,7 @@ internal sealed class QuestInteraction : IDisposable
     private readonly List<ButtonControl> _buttons = new();
     private readonly List<InputAction> _disabled = new();
     private bool _active;
-    internal bool Pressed => (_active && _buttons.Exists(b => b.wasPressedThisFrame)) || Keyboard.current?.f9Key.wasPressedThisFrame == true;
+    internal bool Pressed => (_active && _buttons.Exists(b => b.wasPressedThisFrame)) || QuestPlugin.BoardKeyPressed(Keyboard.current);
     internal string Label
     {
         get
@@ -22,7 +22,7 @@ internal sealed class QuestInteraction : IDisposable
             foreach (ButtonControl button in _buttons)
                 if ((button.device.TryCast<Gamepad>() != null) == gamepad)
                     return button.displayName;
-            return "F9";
+            return QuestPlugin.BoardKeyName;
         }
     }
     internal void Reserve()

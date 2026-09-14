@@ -2,28 +2,39 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
+using FrankMods;
 using Game.LevelOperations;
 using Game.Effects;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 namespace InfernoProtocol.Renovator;
 
-[BepInPlugin("com.holden.infernoprotocol.renovator","Renovator","0.6.0")]
+[BepInPlugin("com.holden.infernoprotocol.renovator","Renovator","0.6.1")]
+[BepInDependency(FrankModsCorePlugin.Guid, FrankModsCorePlugin.Version)]
 public sealed class RenovatorPlugin:BasePlugin
 {
+    internal const string Guid="com.holden.infernoprotocol.renovator";
     internal static ManualLogSource Logger;
     internal static ConfigEntry<bool> Enabled;
     internal static ConfigEntry<bool> MoveSnap;
     internal static ConfigEntry<int> MoveStepIndex;
     internal static ConfigEntry<int> AngleStepIndex;
+    internal static ConfigEntry<Key> EditorKeyboardKey;
+    internal static ConfigEntry<GamepadButton> EditorControllerButton;
     internal static RenovatorController Controller;
     private Harmony _harmony;
     public override void Load()
     {
         Logger=Log; Enabled=Config.Bind("General","Enabled",true,"Enable Renovator. Hosts synchronize committed finishes and object moves to Renovator clients.");
+        EditorKeyboardKey=Config.Bind("Input","EditorKeyboardKey",Key.F6,"Keyboard shortcut used to open the Renovator editor.");
+        EditorControllerButton=Config.Bind("Input","EditorControllerButton",GamepadButton.RightStick,"Controller shortcut used to open the Renovator editor.");
+        ModSettingsRegistry.RegisterKeyBinding(Guid,"Renovator","EditorKeyboardKey","Open Renovator editor",Key.F6,()=>EditorKeyboardKey.Value,key=>EditorKeyboardKey.Value=key);
+        ModSettingsRegistry.RegisterGamepadBinding(Guid,"Renovator","EditorControllerButton","Open Renovator editor",GamepadButton.RightStick,()=>EditorControllerButton.Value,button=>EditorControllerButton.Value=button);
         MoveSnap=Config.Bind("Move tool","Stepped nudges",true,"Use exact increments instead of continuous movement for Renovator nudges. Native structure snapping remains automatic.");
         MoveStepIndex=Config.Bind("Move tool","Movement step",1,new ConfigDescription("Saved movement precision: 0=.05m, 1=.1m, 2=.25m, 3=.5m, 4=1m.",new AcceptableValueRange<int>(0,4)));
         AngleStepIndex=Config.Bind("Move tool","Rotation step",1,new ConfigDescription("Saved angle precision: 0=1, 1=5, 2=15, 3=45, 4=90 degrees.",new AcceptableValueRange<int>(0,4)));
@@ -37,7 +48,7 @@ public sealed class RenovatorPlugin:BasePlugin
         PatchOptionalEditorGate("InfernoProtocol.UtilityWheel.UtilityWheelController","CanRemainOpen");
         PatchOptionalEditorGate("InfernoProtocol.BetterLights.BetterLightsController","CanTarget");
         PatchOptionalEditorGate("InfernoProtocol.BetterLights.BetterLightsController","CanRemainOpen");
-        Log.LogInfo("Renovator 0.6.0 loaded. Host-authoritative finishes and committed moves enabled.");
+        Log.LogInfo("Renovator 0.6.1 loaded. Host-authoritative finishes and committed moves enabled.");
     }
 
     private void PatchOptionalEditorGate(string typeName,string methodName)
@@ -66,10 +77,32 @@ public sealed class RenovatorPlugin:BasePlugin
     }
     public override bool Unload()
     {
+        ModSettingsRegistry.UnregisterMod(Guid);
         _harmony?.UnpatchSelf();
         if(Controller!=null) { Controller.Cleanup(); UnityEngine.Object.Destroy(Controller); }
         Controller=null; return true;
     }
+    internal static bool EditorKeyPressed(Keyboard keyboard)
+    {
+        if(keyboard==null||EditorKeyboardKey==null||EditorKeyboardKey.Value==Key.None) return false;
+        try { return keyboard[EditorKeyboardKey.Value].wasPressedThisFrame; }
+        catch { return false; }
+    }
+    internal static string EditorKeyName=>EditorKeyboardKey?.Value.ToString().ToUpperInvariant()??"F6";
+    internal static bool EditorControllerPressed(Gamepad gamepad)
+    {
+        if(gamepad==null||EditorControllerButton==null) return false;
+        try { return gamepad[EditorControllerButton.Value].wasPressedThisFrame; }
+        catch { return false; }
+    }
+    internal static string EditorControllerName=>EditorControllerButton?.Value switch
+    {
+        GamepadButton.South=>"A",GamepadButton.East=>"B",GamepadButton.West=>"X",GamepadButton.North=>"Y",
+        GamepadButton.LeftShoulder=>"LB",GamepadButton.RightShoulder=>"RB",GamepadButton.LeftTrigger=>"LT",GamepadButton.RightTrigger=>"RT",
+        GamepadButton.LeftStick=>"L3",GamepadButton.RightStick=>"R3",GamepadButton.Start=>"MENU",GamepadButton.Select=>"VIEW",
+        GamepadButton.DpadUp=>"D-PAD UP",GamepadButton.DpadDown=>"D-PAD DOWN",GamepadButton.DpadLeft=>"D-PAD LEFT",GamepadButton.DpadRight=>"D-PAD RIGHT",
+        _=>"R3"
+    };
     [HarmonyPatch]
     private static class Hooks
     {

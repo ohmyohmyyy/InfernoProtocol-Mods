@@ -390,7 +390,7 @@ public sealed class BetterLightsController : MonoBehaviour
         _promptPanel.GetComponent<Outline>().effectColor = WithAlpha(color, 0.76f);
         _promptTitle.text = Time.unscaledTime < _confirmationUntil
             ? _confirmationText
-            : "R3 / F7 / MMB   LIGHT COLOR";
+            : $"{BetterLightsPlugin.PickerControllerName} / {BetterLightsPlugin.PickerKeyName} / MMB   LIGHT COLOR";
         float distance = Player.mainCamera != null
             ? Vector3.Distance(Player.mainCamera.transform.position, TorchColorService.GetVisualPosition(_target))
             : 0f;
@@ -510,8 +510,8 @@ public sealed class BetterLightsController : MonoBehaviour
             return;
         }
 
-        if ((gamepad != null && gamepad.rightStickButton.wasPressedThisFrame) ||
-            (BetterLightsPlugin.KeyboardFallback.Value && keyboard != null && keyboard.f7Key.wasPressedThisFrame))
+        if (BetterLightsPlugin.PickerControllerPressed(gamepad) ||
+            BetterLightsPlugin.PickerKeyPressed(keyboard))
         {
             ConfirmPicker();
         }
@@ -866,13 +866,13 @@ public sealed class BetterLightsController : MonoBehaviour
     {
         mouseMode = false;
         Gamepad gamepad = Gamepad.current;
-        if (gamepad != null && gamepad.rightStickButton.wasPressedThisFrame)
+        if (BetterLightsPlugin.PickerControllerPressed(gamepad))
         {
             return true;
         }
 
         Keyboard keyboard = Keyboard.current;
-        if (BetterLightsPlugin.KeyboardFallback.Value && keyboard != null && keyboard.f7Key.wasPressedThisFrame)
+        if (BetterLightsPlugin.PickerKeyPressed(keyboard))
         {
             mouseMode = Mouse.current != null;
             return true;

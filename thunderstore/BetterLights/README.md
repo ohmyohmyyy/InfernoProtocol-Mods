@@ -10,6 +10,8 @@ Customize individual torch and lantern colors with a controller or mouse.
 
 Colors persist between sessions. In multiplayer, players with the same BetterLights version can see the host's synchronized colors; unmodded players remain compatible and see the original colors.
 
+Open **Mod Settings** from the pause menu to remap the keyboard and controller shortcuts.
+
 Full setup, configuration, compatibility, and troubleshooting details are available on [GitHub](https://github.com/ohmyohmyyy/InfernoProtocol-Mods#betterlights).
 
 ## Community and support

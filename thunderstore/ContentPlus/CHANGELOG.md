@@ -1,3 +1,7 @@
+# 0.5.3
+
+- Added Remapping support
+
 # 0.5.2
 
 - Bug fixes and improvements.

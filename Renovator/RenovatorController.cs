@@ -274,7 +274,7 @@ public sealed class RenovatorController:MonoBehaviour
                 _ui?.Prompt(actionable);
             }
 
-            if((CanMove(_target)||CanRenovate(_target))&&(Keyboard.current?.f6Key.wasPressedThisFrame==true||Mouse.current?.middleButton.wasPressedThisFrame==true||Gamepad.current?.rightStickButton.wasPressedThisFrame==true)&&!OtherEditorOpen())
+            if((CanMove(_target)||CanRenovate(_target))&&(RenovatorPlugin.EditorKeyPressed(Keyboard.current)||Mouse.current?.middleButton.wasPressedThisFrame==true||RenovatorPlugin.EditorControllerPressed(Gamepad.current))&&!OtherEditorOpen())
                 OpenHome();
         }
         catch(Exception e)

@@ -169,7 +169,7 @@ public sealed class BetterUIController : MonoBehaviour
     private void HandleToggle()
     {
         Keyboard keyboard = Keyboard.current;
-        if (keyboard == null || !keyboard.f8Key.wasPressedThisFrame)
+        if (!BetterUIPlugin.ToggleKeyPressed(keyboard))
         {
             return;
         }

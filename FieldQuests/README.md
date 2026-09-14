@@ -1,4 +1,4 @@
-# ContentPlus 0.5.2
+# ContentPlus 0.5.3
 
 ![ContentPlus](../thunderstore/ContentPlus/icon.png)
 
@@ -21,6 +21,8 @@ The board is made from static geometry and owned materials. There is no characte
 Upgrading from the character-based versions keeps the same save file, quest IDs, XP, accepted quests and completed rewards. No reset or migration is needed.
 
 Press your normal **Interact** button to read the board. The prompt shows the button name from your current keyboard/controller binding, including remaps. **F9** remains a keyboard fallback. Mouse/controller journal controls and owned-storage turn-ins are unchanged.
+
+Open **Mod Settings** from the pause menu to remap the optional keyboard shortcut. Controller interaction continues to use the game's native Interact binding.
 
 Assignments requiring assets absent from your installed game build are individually hidden and logged; the tested game log currently resolves 22 of 24. Existing active assignments with missing assets can still be abandoned to free a slot without silently deleting their progress.
 

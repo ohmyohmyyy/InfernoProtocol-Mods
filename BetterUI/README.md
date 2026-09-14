@@ -1,4 +1,4 @@
-# BetterUI 0.12.0
+# BetterUI 0.12.1
 
 Polished crafting, building, and trader menus plus a compact genetics tree for Inferno Protocol. This mod changes presentation only, not crafting costs/times, construction rules, trade data, gene acquisition, gene stages or effects.
 
@@ -12,6 +12,8 @@ Open the native genetics panel normally. Acquired genes appear along a DNA spine
 - `Genetics.Enabled=false` keeps the original list. `Genetics.ReducedMotion=true` disables decorative motion and smooth focus transitions.
 
 Config: `BepInEx/config/com.holden.infernoprotocol.betterui.cfg`. F8 pauses/resumes BetterUI for the current session. The separate local GeneticsTest helper is not included and is not required.
+
+Open **Mod Settings** from the pause menu to remap supported FrankMods controls.
 
 ## Crafting
 

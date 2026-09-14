@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.1
+
+- Added Remapping support
+
 ## 0.12.0
 
 - Now includes Trader UI.

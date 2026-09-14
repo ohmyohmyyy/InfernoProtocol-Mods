@@ -19,7 +19,7 @@ internal sealed class RenovatorPanel:IDisposable
     private readonly Image[] _sizes=new Image[4];
     private readonly TextMeshProUGUI[] _sizeLabels=new TextMeshProUGUI[4];
     private readonly Image _previousBackground,_nextBackground,_applyBackground,_cancelBackground;
-    private readonly TextMeshProUGUI _pageLabel,_hint,_status,_selected;
+    private readonly TextMeshProUGUI _pageLabel,_hint,_status,_selected,_promptText;
     private readonly Func<int,Texture2D> _texture;
     private readonly Action<int,int> _preview,_save;
     private readonly Action _close;
@@ -50,7 +50,8 @@ internal sealed class RenovatorPanel:IDisposable
         var prompt=Box("RenovatorPrompt",_canvas.transform,.385f,.105f,.615f,.153f,new Color(.015f,.035f,.038f,.86f));
         _prompt=prompt.gameObject;
         Box("PromptAccent",prompt.transform,0,0,.008f,1,_accent);
-        Text(prompt.transform,.05f,0,.95f,1,"RENOVATOR  /  R3  /  F6  /  MIDDLE MOUSE",14,_accent).alignment=TextAlignmentOptions.Center;
+        _promptText=Text(prompt.transform,.05f,0,.95f,1,string.Empty,14,_accent);
+        _promptText.alignment=TextAlignmentOptions.Center;
 
         var panel=Box("RenovatorPicker",_canvas.transform,.61f,.14f,.96f,.86f,new Color(.025f,.043f,.045f,.945f));
         _panel=panel.gameObject; _panelRect=panel.rectTransform; panel.raycastTarget=true;
@@ -124,6 +125,7 @@ internal sealed class RenovatorPanel:IDisposable
     internal void Hide() { Open=false; _panel.SetActive(false); }
     internal void Prompt(bool show)
     {
+        _promptText.text=$"RENOVATOR  /  {RenovatorPlugin.EditorControllerName}  /  {RenovatorPlugin.EditorKeyName}  /  MIDDLE MOUSE";
         bool visible=show&&!Open;
         if(visible==_promptVisible) return;
         _promptVisible=visible; _prompt.SetActive(visible);

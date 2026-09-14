@@ -2,16 +2,19 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
+using FrankMods;
 using Game.UI;
 using Game.LevelOperations;
 using Game.UI.Trade;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace InfernoProtocol.BetterUI;
 
 [BepInPlugin(PluginInfo.Guid, PluginInfo.Name, PluginInfo.Version)]
+[BepInDependency(FrankModsCorePlugin.Guid, FrankModsCorePlugin.Version)]
 public sealed class BetterUIPlugin : BasePlugin
 {
     private static BetterUIController _controller;
@@ -25,6 +28,7 @@ public sealed class BetterUIPlugin : BasePlugin
     internal static ConfigEntry<bool> TraderEnabled { get; private set; }
     internal static ConfigEntry<float> RefreshInterval { get; private set; }
     internal static ConfigEntry<int> ColorPalette { get; private set; }
+    internal static ConfigEntry<Key> ToggleKey { get; private set; }
     internal static float RefreshSeconds => Sanitize(RefreshInterval.Value, 0.5f, 0.2f, 5f);
     internal static int PaletteIndex => ColorPalette != null
         ? Mathf.Clamp(ColorPalette.Value, 0, BetterUITheme.PaletteCount - 1)
@@ -34,7 +38,9 @@ public sealed class BetterUIPlugin : BasePlugin
     {
         ModLog = Log;
         Enabled = Config.Bind("General", "Enabled", true,
-            "Enables BetterUI crafting, building, trader and genetics presentation. F8 pauses or resumes it for the current session.");
+            "Enables BetterUI crafting, building, trader and genetics presentation. The configured toggle key pauses or resumes it for the current session.");
+        ToggleKey = Config.Bind("General", "ToggleKey", Key.F8,
+            "Keyboard shortcut that pauses or resumes BetterUI for the current session.");
         GeneticsEnabled = Config.Bind("Genetics", "Enabled", true,
             "Displays acquired genetics as a navigable DNA tree. Presentation only; disable to keep the original genetics list.");
         GeneticsReducedMotion = Config.Bind("Genetics", "ReducedMotion", false,
@@ -56,6 +62,9 @@ public sealed class BetterUIPlugin : BasePlugin
                 "Remembered BetterUI palette: 0 green, 1 blue, 2 cyan, 3 violet, 4 amber.",
                 new AcceptableValueRange<int>(0, BetterUITheme.PaletteCount - 1)));
 
+        ModSettingsRegistry.RegisterKeyBinding(PluginInfo.Guid, PluginInfo.Name, "ToggleKey",
+            "Pause / resume BetterUI", Key.F8, () => ToggleKey.Value, key => ToggleKey.Value = key);
+
         ClassInjector.RegisterTypeInIl2Cpp<GeneBranchGraphic>();
         _controller = AddComponent<BetterUIController>();
         _harmony = new Harmony(PluginInfo.Guid);
@@ -72,6 +81,7 @@ public sealed class BetterUIPlugin : BasePlugin
 
     public override bool Unload()
     {
+        ModSettingsRegistry.UnregisterMod(PluginInfo.Guid);
         SetBuildingOpen(false);
         SetTraderOpen(false);
         _harmony?.UnpatchSelf();
@@ -84,6 +94,13 @@ public sealed class BetterUIPlugin : BasePlugin
         }
 
         return true;
+    }
+
+    internal static bool ToggleKeyPressed(Keyboard keyboard)
+    {
+        if (keyboard == null || ToggleKey == null || ToggleKey.Value == Key.None) return false;
+        try { return keyboard[ToggleKey.Value].wasPressedThisFrame; }
+        catch { return false; }
     }
 
     internal static void SetCraftingOpen(bool open)

@@ -26,6 +26,8 @@ Hold the **Building Hammer**, look directly at a player-placed object within 2.7
 
 Choose **Surface finishes** or **Move & rotate**. Finish controls are only available for compatible wood and stone surfaces.
 
+Open **Mod Settings** from the pause menu to remap the keyboard and controller editor shortcuts.
+
 ## Surface finish controls
 
 - Controller: D-pad browses, `X` cycles pattern size, `A` applies, and `B` returns.

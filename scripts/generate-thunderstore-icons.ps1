@@ -1,4 +1,4 @@
-param([switch]$ContentPlusOnly,[switch]$RenovatorOnly)
+param([switch]$ContentPlusOnly,[switch]$RenovatorOnly,[switch]$FrankModsCoreOnly)
 $ErrorActionPreference = 'Stop'
 
 Add-Type -AssemblyName System.Drawing
@@ -206,46 +206,57 @@ function New-RenovatorIcon {
     $canvas = New-Canvas
     $g = $canvas.Graphics
     $outline = [System.Drawing.Pen]::new($bright, 7)
-    $line = [System.Drawing.Pen]::new($soft, 5)
-    $paper = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(255, 18, 57, 57))
-    $accent = [System.Drawing.Pen]::new($cyan, 7)
+    $detail = [System.Drawing.Pen]::new([System.Drawing.Color]::FromArgb(255, 126, 181, 164), 5)
+    $houseFill = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(255, 12, 48, 47))
+    $openingFill = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(255, 5, 22, 23))
+    $knobFill = [System.Drawing.SolidBrush]::new($bright)
     $house = [System.Drawing.Point[]]@(
-        [System.Drawing.Point]::new(39,112),
-        [System.Drawing.Point]::new(128,42),
-        [System.Drawing.Point]::new(217,112),
-        [System.Drawing.Point]::new(197,112),
-        [System.Drawing.Point]::new(197,211),
-        [System.Drawing.Point]::new(59,211),
-        [System.Drawing.Point]::new(59,112)
+        [System.Drawing.Point]::new(42,111),
+        [System.Drawing.Point]::new(128,44),
+        [System.Drawing.Point]::new(214,111),
+        [System.Drawing.Point]::new(196,111),
+        [System.Drawing.Point]::new(196,210),
+        [System.Drawing.Point]::new(60,210),
+        [System.Drawing.Point]::new(60,111)
     )
-    $g.FillPolygon($paper,$house)
+    $g.FillPolygon($houseFill,$house)
     $g.DrawLines($outline,$house)
-    $g.DrawLine($outline,39,112,128,42)
-    $g.DrawLine($outline,128,42,217,112)
-    $g.DrawLine($outline,59,211,197,211)
+    $g.DrawLine($outline,42,111,128,44)
+    $g.DrawLine($outline,128,44,214,111)
+    $g.DrawLine($outline,60,210,196,210)
 
-    # Wallpapered window/panel gives the house a clear surface-finishing cue.
-    $g.DrawRectangle($outline,75,116,58,54)
-    $g.DrawLine($line,94,117,94,169)
-    $g.DrawLine($line,114,117,114,169)
-    $g.DrawLine($accent,79,140,94,125)
-    $g.DrawLine($accent,99,160,114,145)
-    $g.DrawLine($accent,118,137,129,126)
+    # Simple architectural details keep the mark readable at package-icon size.
+    $g.FillRectangle($openingFill,77,119,59,49)
+    $g.DrawRectangle($detail,77,119,59,49)
+    $g.DrawLine($detail,106,120,106,167)
+    $g.DrawLine($detail,78,143,135,143)
 
-    # Door plus a compact four-way move glyph communicates object placement.
-    $g.DrawRectangle($outline,151,135,27,76)
-    $g.DrawEllipse($accent,168,174,3,3)
-    $g.DrawLine($accent,103,190,139,190)
-    $g.DrawLine($accent,121,172,121,208)
-    $g.DrawLine($accent,103,190,112,181)
-    $g.DrawLine($accent,103,190,112,199)
-    $g.DrawLine($accent,139,190,130,181)
-    $g.DrawLine($accent,139,190,130,199)
-    $g.DrawLine($accent,121,172,112,181)
-    $g.DrawLine($accent,121,172,130,181)
-    $g.DrawLine($accent,121,208,112,199)
-    $g.DrawLine($accent,121,208,130,199)
-    $outline.Dispose(); $line.Dispose(); $paper.Dispose(); $accent.Dispose()
+    $g.FillRectangle($openingFill,153,134,27,76)
+    $g.DrawRectangle($detail,153,134,27,76)
+    $g.FillEllipse($knobFill,169,171,6,6)
+
+    $outline.Dispose(); $detail.Dispose(); $houseFill.Dispose(); $openingFill.Dispose(); $knobFill.Dispose()
+    Save-Canvas -Canvas $canvas -Path $Path
+}
+
+function New-FrankModsCoreIcon {
+    param([string]$Path)
+
+    $canvas = New-Canvas
+    $g = $canvas.Graphics
+    $line = [System.Drawing.Pen]::new($bright, 8)
+    $dimLine = [System.Drawing.Pen]::new($soft, 6)
+    $knob = [System.Drawing.SolidBrush]::new($cyan)
+    $g.DrawLine($dimLine, 52, 76, 204, 76)
+    $g.DrawLine($dimLine, 52, 128, 204, 128)
+    $g.DrawLine($dimLine, 52, 180, 204, 180)
+    $g.FillEllipse($knob, 82, 59, 34, 34)
+    $g.DrawEllipse($line, 82, 59, 34, 34)
+    $g.FillEllipse($knob, 145, 111, 34, 34)
+    $g.DrawEllipse($line, 145, 111, 34, 34)
+    $g.FillEllipse($knob, 105, 163, 34, 34)
+    $g.DrawEllipse($line, 105, 163, 34, 34)
+    $line.Dispose(); $dimLine.Dispose(); $knob.Dispose()
     Save-Canvas -Canvas $canvas -Path $Path
 }
 
@@ -280,6 +291,12 @@ if ($RenovatorOnly) {
     $directory = Join-Path $repoRoot 'thunderstore\Renovator'
     New-Item -ItemType Directory -Path $directory -Force | Out-Null
     New-RenovatorIcon -Path (Join-Path $directory 'icon.png')
+    return
+}
+if ($FrankModsCoreOnly) {
+    $directory = Join-Path $repoRoot 'thunderstore\FrankModsCore'
+    New-Item -ItemType Directory -Path $directory -Force | Out-Null
+    New-FrankModsCoreIcon -Path (Join-Path $directory 'icon.png')
     return
 }
 New-BetterUiIcon -Path (Join-Path $repoRoot 'thunderstore\BetterUI\icon.png')

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.7
+
+- Added Remapping support
+
 ## 0.3.6
 
 - Performance improvement.

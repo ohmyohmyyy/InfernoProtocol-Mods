@@ -1,3 +1,7 @@
+# 0.6.1
+
+- Added Remapping support
+
 # 0.6.0
 
 - Added host-authoritative multiplayer synchronization for committed surface finishes.

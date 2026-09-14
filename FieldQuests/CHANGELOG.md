@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.3 - ContentPlus
+
+- Added Remapping support
+
 ## 0.5.2 - ContentPlus
 
 - Bug fixes and improvements.

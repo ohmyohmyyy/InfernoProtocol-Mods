@@ -1,0 +1,9 @@
+{
+  "name": "FrankModsCore",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/ohmyohmyyy/InfernoProtocol-Mods",
+  "description": "Shared pause-menu settings and input remapping support for FrankMods releases.",
+  "dependencies": [
+    "FrankMods-InfernoProtocolInteropFix-1.0.0"
+  ]
+}

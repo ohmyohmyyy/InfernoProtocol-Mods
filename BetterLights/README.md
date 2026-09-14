@@ -20,6 +20,8 @@ Keyboard fallback: `F7` opens/saves, arrow keys adjust hue and saturation, and `
 
 Mouse controls: press `F7` or the middle mouse button while targeting a light. Click and drag directly on the color wheel, click any preset, then use the visible `Save`, `Original`, or `Cancel` buttons. BetterLights unlocks the cursor only while the picker is open and restores the previous cursor state afterward.
 
+Open **Mod Settings** from the pause menu to remap the keyboard and controller shortcuts.
+
 The small targeting prompt now shows the selected light type, distance, current color, and brief save confirmation. The picker shows live hue/saturation values and keeps itself inside the visible screen area.
 
 ## Multiplayer
