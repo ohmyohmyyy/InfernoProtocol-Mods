@@ -7,9 +7,9 @@
     <AssemblyName>InfernoProtocol.UtilityWheel</AssemblyName>
     <RootNamespace>InfernoProtocol.UtilityWheel</RootNamespace>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>0.2.4</Version>
-    <FileVersion>0.2.4.0</FileVersion>
-    <AssemblyVersion>0.2.4.0</AssemblyVersion>
+    <Version>0.2.5</Version>
+    <FileVersion>0.2.5.0</FileVersion>
+    <AssemblyVersion>0.2.5.0</AssemblyVersion>
     <Deterministic>true</Deterministic>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <DebugType>portable</DebugType>

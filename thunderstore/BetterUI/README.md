@@ -2,6 +2,8 @@
 
 Refined crafting, building, and trader menus, exact hotbar durability, and a living DNA tree for your acquired genetics.
 
+Requires **FrankMods Core** and **InfernoProtocolInteropFix**. Thunderstore and r2modman install both automatically.
+
 ## Features
 
 - Clearer recipes, ingredients, categories, and craft-button states.

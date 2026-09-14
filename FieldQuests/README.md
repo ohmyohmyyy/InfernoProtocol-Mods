@@ -1,4 +1,4 @@
-# ContentPlus 0.5.3
+# ContentPlus 0.5.4
 
 ![ContentPlus](../thunderstore/ContentPlus/icon.png)
 

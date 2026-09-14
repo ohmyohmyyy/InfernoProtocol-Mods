@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.8 - 2026-09-14
+
+- Added required Interop Fix dependency.
+
 ## 0.3.7 - 2026-09-13
 
 - Added Remapping support

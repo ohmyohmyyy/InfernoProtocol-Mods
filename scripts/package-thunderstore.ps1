@@ -14,6 +14,7 @@ $stagingRoot = Join-Path $outputRoot 'staging'
 $bepInExDependency = 'BepInEx-BepInExPack_IL2CPP-6.0.755'
 $interopFixDependency = 'FrankMods-InfernoProtocolInteropFix-1.0.0'
 $frankModsCoreDependency = 'FrankMods-FrankModsCore-1.0.0'
+$requiredModDependencies = @($frankModsCoreDependency, $interopFixDependency)
 
 $packages = @(
     [pscustomobject]@{
@@ -29,7 +30,7 @@ $packages = @(
         DllName = 'InfernoProtocol.BetterUI.dll'
         DllPath = Join-Path $repoRoot 'BetterUI\bin\Release\net6.0\InfernoProtocol.BetterUI.dll'
         InstallPath = 'BepInEx\plugins\BetterUI'
-        Dependency = $frankModsCoreDependency
+        Dependency = $requiredModDependencies
         ExtraFiles = @()
     },
     [pscustomobject]@{
@@ -37,7 +38,7 @@ $packages = @(
         DllName = 'InfernoProtocol.UtilityWheel.dll'
         DllPath = Join-Path $repoRoot 'UtilityWheel\bin\Release\net6.0\InfernoProtocol.UtilityWheel.dll'
         InstallPath = 'BepInEx\plugins\UtilityWheel'
-        Dependency = $frankModsCoreDependency
+        Dependency = $requiredModDependencies
         ExtraFiles = @()
     },
     [pscustomobject]@{
@@ -45,7 +46,7 @@ $packages = @(
         DllName = 'InfernoProtocol.BetterLights.dll'
         DllPath = Join-Path $repoRoot 'BetterLights\bin\Release\net6.0\InfernoProtocol.BetterLights.dll'
         InstallPath = 'BepInEx\plugins\BetterLights'
-        Dependency = $frankModsCoreDependency
+        Dependency = $requiredModDependencies
         ExtraFiles = @()
     },
     [pscustomobject]@{
@@ -53,7 +54,7 @@ $packages = @(
         DllName = 'InfernoProtocol.Renovator.dll'
         DllPath = Join-Path $repoRoot 'Renovator\bin\Release\net6.0\InfernoProtocol.Renovator.dll'
         InstallPath = 'BepInEx\plugins\Renovator'
-        Dependency = $frankModsCoreDependency
+        Dependency = $requiredModDependencies
         ExtraFiles = @()
     },
     [pscustomobject]@{
@@ -76,7 +77,7 @@ function Assert-Manifest {
     param(
         [Parameter(Mandatory = $true)]$Manifest,
         [Parameter(Mandatory = $true)][string]$Path,
-        [Parameter(Mandatory = $true)][string]$ExpectedDependency
+        [Parameter(Mandatory = $true)][string[]]$ExpectedDependency
     )
 
     $requiredKeys = @('name', 'version_number', 'website_url', 'description', 'dependencies')
@@ -106,8 +107,10 @@ function Assert-Manifest {
     }
 
     $dependencies = @($Manifest.dependencies)
-    if ($dependencies.Count -ne 1 -or $dependencies[0] -ne $ExpectedDependency) {
-        throw "$Path must depend on exactly $ExpectedDependency."
+    $missingDependencies = @($ExpectedDependency | Where-Object { $_ -notin $dependencies })
+    $unexpectedDependencies = @($dependencies | Where-Object { $_ -notin $ExpectedDependency })
+    if ($dependencies.Count -ne $ExpectedDependency.Count -or $missingDependencies.Count -gt 0 -or $unexpectedDependencies.Count -gt 0) {
+        throw "$Path must depend on exactly $($ExpectedDependency -join ', ')."
     }
 }
 

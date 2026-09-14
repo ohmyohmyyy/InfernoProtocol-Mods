@@ -21,4 +21,4 @@ if (-not (Test-Path -LiteralPath $coreSource)) { throw 'FrankMods Core build out
 New-Item -ItemType Directory -Force -Path $coreDir | Out-Null
 Copy-Item -LiteralPath $coreSource -Destination (Join-Path $coreDir 'FrankMods.Core.dll') -Force
 if ((Get-FileHash -LiteralPath $source).Hash -ne (Get-FileHash -LiteralPath $target).Hash) { throw 'Installed DLL verification failed.' }
-Write-Output "Installed and verified ContentPlus 0.5.3 at $target"
+Write-Output "Installed and verified ContentPlus 0.5.4 at $target"

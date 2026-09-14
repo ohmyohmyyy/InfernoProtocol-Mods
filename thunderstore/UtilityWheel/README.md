@@ -2,6 +2,8 @@
 
 A translucent radial selector for every occupied, visible hotbar slot—not just weapons.
 
+Requires **FrankMods Core** and **InfernoProtocolInteropFix**. Thunderstore and r2modman install both automatically.
+
 ## Controls
 
 - Controller: hold `LB`, point with the right stick, and release to equip. Press `B` to cancel.

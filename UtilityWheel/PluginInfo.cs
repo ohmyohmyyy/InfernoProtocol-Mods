@@ -4,5 +4,5 @@ internal static class PluginInfo
 {
     internal const string Guid = "com.holden.infernoprotocol.utilitywheel";
     internal const string Name = "Utility Wheel";
-    internal const string Version = "0.2.4";
+    internal const string Version = "0.2.5";
 }

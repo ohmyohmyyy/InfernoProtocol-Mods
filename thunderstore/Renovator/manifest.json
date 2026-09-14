@@ -1,9 +1,10 @@
 {
   "name": "Renovator",
-  "version_number": "0.6.1",
+  "version_number": "0.6.2",
   "website_url": "https://github.com/ohmyohmyyy/InfernoProtocol-Mods/tree/main/Renovator",
   "description": "Move and align placed objects, apply 27 curated finishes, and synchronize committed renovations in multiplayer.",
   "dependencies": [
-    "FrankMods-FrankModsCore-1.0.0"
+    "FrankMods-FrankModsCore-1.0.0",
+    "FrankMods-InfernoProtocolInteropFix-1.0.0"
   ]
 }

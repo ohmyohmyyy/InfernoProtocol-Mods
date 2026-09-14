@@ -1,3 +1,7 @@
+# 0.6.2
+
+- Added required Interop Fix dependency.
+
 # 0.6.1
 
 - Added Remapping support

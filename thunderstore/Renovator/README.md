@@ -2,6 +2,8 @@
 
 Renovator expands building customization with post-placement editing and curated surface finishes.
 
+Requires **FrankMods Core** and **InfernoProtocolInteropFix**. Thunderstore and r2modman install both automatically.
+
 - Move and rotate placed objects through the game's familiar placement preview.
 - Use native surface placement, validity feedback, compatible-edge snapping, and optional precision nudges.
 - Apply 27 seamless finishes to compatible wood and stone walls, floors, ceilings, and roofs.

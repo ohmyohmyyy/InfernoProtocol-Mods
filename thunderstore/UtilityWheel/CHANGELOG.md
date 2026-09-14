@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.5
+
+- Added required Interop Fix dependency.
+
 ## 0.2.4
 
 - Added Remapping support

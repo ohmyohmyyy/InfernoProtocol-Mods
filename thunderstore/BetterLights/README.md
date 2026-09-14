@@ -2,6 +2,8 @@
 
 Customize individual torch and lantern colors with a controller or mouse.
 
+Requires **FrankMods Core** and **InfernoProtocolInteropFix**. Thunderstore and r2modman install both automatically.
+
 ## Controls
 
 - Look at a nearby light and press `R3`, `F7`, or middle mouse to open the picker.

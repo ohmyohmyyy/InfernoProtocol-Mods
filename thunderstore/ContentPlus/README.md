@@ -2,6 +2,8 @@
 
 More reasons to explore, gather and build your character.
 
+Requires **FrankMods Core** and **InfernoProtocolInteropFix**. Thunderstore and r2modman install both automatically.
+
 - A quest board beside the starting house with supply contracts and creature hunts.
 - Item rewards and XP, with saved levels and a compact exploration HUD.
 - Supply turn-ins from carried items and eligible loaded player-built storage.

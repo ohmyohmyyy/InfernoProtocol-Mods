@@ -1,4 +1,4 @@
-# BetterUI 0.12.1
+# BetterUI 0.12.2
 
 Polished crafting, building, and trader menus plus a compact genetics tree for Inferno Protocol. This mod changes presentation only, not crafting costs/times, construction rules, trade data, gene acquisition, gene stages or effects.
 

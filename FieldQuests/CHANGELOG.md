@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.4 - ContentPlus
+
+- Added required Interop Fix dependency.
+
 ## 0.5.3 - ContentPlus
 
 - Added Remapping support

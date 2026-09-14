@@ -13,7 +13,7 @@ using UnityEngine.InputSystem;
 
 namespace InfernoProtocol.FieldQuests;
 
-[BepInPlugin("com.holden.infernoprotocol.fieldquests", "ContentPlus", "0.5.3")]
+[BepInPlugin("com.holden.infernoprotocol.fieldquests", "ContentPlus", "0.5.4")]
 [BepInDependency(FrankModsCorePlugin.Guid, FrankModsCorePlugin.Version)]
 public sealed class QuestPlugin : BasePlugin
 {
@@ -32,7 +32,7 @@ public sealed class QuestPlugin : BasePlugin
         Controller = AddComponent<QuestController>();
         _harmony = new Harmony("com.holden.infernoprotocol.fieldquests");
         _harmony.PatchAll(typeof(Hooks));
-        Log.LogInfo($"ContentPlus 0.5.3 loaded. Quest board, XP progression and equipment finishes. Use Interact to read the board ({BoardKeyName} also works).");
+        Log.LogInfo($"ContentPlus 0.5.4 loaded. Quest board, XP progression and equipment finishes. Use Interact to read the board ({BoardKeyName} also works).");
     }
     public override bool Unload()
     {

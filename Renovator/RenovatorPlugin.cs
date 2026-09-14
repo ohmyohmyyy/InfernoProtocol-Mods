@@ -14,7 +14,7 @@ using UnityEngine.InputSystem.LowLevel;
 
 namespace InfernoProtocol.Renovator;
 
-[BepInPlugin("com.holden.infernoprotocol.renovator","Renovator","0.6.1")]
+[BepInPlugin("com.holden.infernoprotocol.renovator","Renovator","0.6.2")]
 [BepInDependency(FrankModsCorePlugin.Guid, FrankModsCorePlugin.Version)]
 public sealed class RenovatorPlugin:BasePlugin
 {
@@ -48,7 +48,7 @@ public sealed class RenovatorPlugin:BasePlugin
         PatchOptionalEditorGate("InfernoProtocol.UtilityWheel.UtilityWheelController","CanRemainOpen");
         PatchOptionalEditorGate("InfernoProtocol.BetterLights.BetterLightsController","CanTarget");
         PatchOptionalEditorGate("InfernoProtocol.BetterLights.BetterLightsController","CanRemainOpen");
-        Log.LogInfo("Renovator 0.6.1 loaded. Host-authoritative finishes and committed moves enabled.");
+        Log.LogInfo("Renovator 0.6.2 loaded. Host-authoritative finishes and committed moves enabled.");
     }
 
     private void PatchOptionalEditorGate(string typeName,string methodName)
