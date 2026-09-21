@@ -74,6 +74,7 @@ internal static class BetterUITheme
     private static Sprite _roundedSprite;
     private static Texture2D _scanlineTexture;
     private static Texture2D _colorWheelTexture;
+    private static Texture2D _gearTexture;
 
     private static Palette Current
     {
@@ -113,6 +114,19 @@ internal static class BetterUITheme
             }
 
             return _colorWheelTexture;
+        }
+    }
+
+    internal static Texture2D GearTexture
+    {
+        get
+        {
+            if (_gearTexture == null)
+            {
+                _gearTexture = CreateGearTexture();
+            }
+
+            return _gearTexture;
         }
     }
 
@@ -294,6 +308,37 @@ internal static class BetterUITheme
 
                 float hue = Mathf.Repeat(Mathf.Atan2(delta.y, delta.x) / (Mathf.PI * 2f), 1f);
                 pixels[(y * size) + x] = Color.HSVToRGB(hue, 0.86f, 1f);
+            }
+        }
+
+        texture.SetPixels32(pixels);
+        texture.Apply(false, true);
+        Object.DontDestroyOnLoad(texture);
+        return texture;
+    }
+
+    private static Texture2D CreateGearTexture()
+    {
+        const int size = 32;
+        var texture = NewIconTexture("BetterUI_Gear", size);
+        var pixels = new Color32[size * size];
+        var white = new Color32(255, 255, 255, 255);
+        Vector2 center = new((size - 1) * 0.5f, (size - 1) * 0.5f);
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                Vector2 delta = new Vector2(x, y) - center;
+                float radius = delta.magnitude;
+                float angle = Mathf.Atan2(delta.y, delta.x);
+                float tooth = Mathf.Abs(Mathf.Sin(angle * 4f));
+                bool ring = radius >= 7f && radius <= 11.5f;
+                bool teeth = radius > 10.5f && radius <= 14f && tooth < 0.34f;
+                bool hub = radius >= 3.25f && radius <= 6.25f;
+                pixels[(y * size) + x] = ring || teeth || hub
+                    ? white
+                    : new Color32(255, 255, 255, 0);
             }
         }
 

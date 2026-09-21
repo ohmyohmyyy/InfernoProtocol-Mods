@@ -10,7 +10,7 @@ Requires **FrankMods Core** and **InfernoProtocolInteropFix**. Thunderstore and 
 - Search and live recipe availability updates.
 - Integrated fabrication progress.
 - A streamlined building catalog with search, categories, plan inspection, and material requirements.
-- A compact trader exchange with searchable offers, clear affordability states, and native trade behavior.
+- A compact trader exchange with searchable offers, per-offer restock timers, adjustable text size, clear affordability states, and native trade behavior.
 - Exact durability values beneath durable hotbar items.
 - Five selectable color palettes that persist between sessions.
 - Restores the hand-crafting launcher correctly after closing the menu.

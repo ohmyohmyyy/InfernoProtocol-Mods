@@ -34,6 +34,8 @@ internal sealed class CraftingMenuOverhaul
     private GridLayoutGroup _recipeGrid;
     private TextMeshProUGUI _recipeHeading;
     private TextMeshProUGUI _craftingDurability;
+    private TextMeshProUGUI _craftingQuantity;
+    private RectTransform _craftingQuantityRow;
     private GameObject _replacementRoot;
     private RectTransform _themeButton;
     private GameObject _requirementsSection;
@@ -91,6 +93,7 @@ internal sealed class CraftingMenuOverhaul
 
     internal void RefreshCraftingProgress(CraftingTableUI crafting)
     {
+        RefreshQuantityReadout(crafting != null ? crafting._selectedRecipeUI : null);
         if (crafting == null || _fabricationSection == null)
         {
             return;
@@ -341,6 +344,8 @@ internal sealed class CraftingMenuOverhaul
         _recipeCountState = int.MinValue;
         _layoutRebuildPasses = 4;
         _recipeGrid = null;
+        _craftingQuantity = null;
+        _craftingQuantityRow = null;
         Transform recipeHeading = crafting.transform.Find(
             "BetterUI_CraftingMenu/BetterUI_Body/BetterUI_RecipeBrowser/BetterUI_RecipeHeader/BetterUI_RecipeHeading");
         _recipeHeading = recipeHeading != null ? recipeHeading.GetComponent<TextMeshProUGUI>() : null;
@@ -1294,11 +1299,21 @@ internal sealed class CraftingMenuOverhaul
         status.alignment = TextAlignmentOptions.MidlineRight;
     }
 
-    private static void StyleQuantity(SelectedCraftingRecipeUI selected)
+    private void StyleQuantity(SelectedCraftingRecipeUI selected)
     {
         Slider slider = selected._craftCountSlider;
         if (slider != null)
         {
+            EnsureQuantityReadout(selected, slider);
+            if (_craftingQuantityRow != null &&
+                (slider.transform.parent == null ||
+                 slider.transform.parent.GetInstanceID() != _craftingQuantityRow.GetInstanceID()))
+                slider.transform.SetParent(_craftingQuantityRow, false);
+            if (selected._sliderContainer != null &&
+                (_craftingQuantityRow == null ||
+                 selected._sliderContainer.transform.GetInstanceID() != _craftingQuantityRow.GetInstanceID()))
+                selected._sliderContainer.SetActive(false);
+            PositionQuantityControls(slider);
             MakeFlat(slider.GetComponent<Image>(), BetterUITheme.CraftingWell, BetterUITheme.BorderSoft);
             MakeFlat(
                 slider.fillRect != null ? slider.fillRect.GetComponent<Image>() : null,
@@ -1310,6 +1325,9 @@ internal sealed class CraftingMenuOverhaul
                 BetterUITheme.PrimaryHover);
 
             LayoutElement sliderLayout = GetOrAddLayout(slider.gameObject);
+            sliderLayout.ignoreLayout = true;
+            sliderLayout.minWidth = 0f;
+            sliderLayout.preferredWidth = 0f;
             sliderLayout.minHeight = 18f;
             sliderLayout.preferredHeight = 18f;
             sliderLayout.flexibleWidth = 1f;
@@ -1319,44 +1337,149 @@ internal sealed class CraftingMenuOverhaul
                 slider.handleRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 18f);
                 slider.handleRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 18f);
             }
-
-            ReserveQuantityLabelSpace(selected, slider);
         }
 
-        BetterUIStyler.Text(selected._craftCountTmp, 16f, BetterUITheme.PrimaryHover, FontStyles.Bold);
         if (selected._craftCountTmp != null)
         {
-            StyleExistingParentSurface(
-                selected._craftCountTmp,
-                BetterUITheme.PrimarySoft,
-                BetterUITheme.Primary,
-                selected.transform);
+            selected._craftCountTmp.enabled = false;
+            selected._craftCountTmp.gameObject.SetActive(false);
         }
+
+        RefreshQuantityReadout(selected);
     }
 
-    private static void ReserveQuantityLabelSpace(SelectedCraftingRecipeUI selected, Slider slider)
+    private void EnsureQuantityReadout(SelectedCraftingRecipeUI selected, Slider slider)
     {
-        if (selected._craftCountTmp == null || slider == null)
+        if (_craftingQuantity != null || selected == null || slider == null) return;
+        Transform nativeHost = selected._sliderContainer != null
+            ? selected._sliderContainer.transform
+            : slider.transform.parent;
+        Transform host = _requirementsSection != null && _requirementsSection.transform.parent != null
+            ? _requirementsSection.transform.parent
+            : nativeHost != null ? nativeHost.parent : null;
+        if (host == null) return;
+        if (selected._craftCountTmp != null)
         {
-            return;
+            selected._craftCountTmp.enabled = false;
+            selected._craftCountTmp.gameObject.SetActive(false);
+            GetOrAddLayout(selected._craftCountTmp.gameObject).ignoreLayout = true;
         }
 
-        Transform countParent = selected._craftCountTmp.transform.parent;
-        Transform sliderParent = slider.transform.parent;
-        if (countParent == null || sliderParent == null || countParent.GetInstanceID() != sliderParent.GetInstanceID())
+        var rowObject = new GameObject(
+            "BetterUI_CraftingQuantityRow",
+            Il2CppType.Of<RectTransform>(),
+            Il2CppType.Of<HorizontalLayoutGroup>(),
+            Il2CppType.Of<LayoutElement>());
+        rowObject.transform.SetParent(host, false);
+        _craftingQuantityRow = rowObject.GetComponent<RectTransform>();
+        _craftingQuantityRow.anchorMin = new Vector2(0f, 1f);
+        _craftingQuantityRow.anchorMax = Vector2.one;
+        _craftingQuantityRow.pivot = new Vector2(.5f, 1f);
+        _craftingQuantityRow.anchoredPosition = Vector2.zero;
+        _craftingQuantityRow.sizeDelta = new Vector2(0f, 38f);
+        HorizontalLayoutGroup row = rowObject.GetComponent<HorizontalLayoutGroup>();
+        // Position both controls explicitly. The native slider continually restores
+        // stretch anchors, which allowed it to consume the readout's layout space.
+        row.enabled = false;
+        LayoutElement rowElement = rowObject.GetComponent<LayoutElement>();
+        rowElement.ignoreLayout = false;
+        rowElement.minWidth = 0f;
+        rowElement.preferredWidth = 0f;
+        rowElement.flexibleWidth = 1f;
+        rowElement.minHeight = 38f;
+        rowElement.preferredHeight = 38f;
+        rowElement.flexibleHeight = 0f;
+
+        slider.transform.SetParent(_craftingQuantityRow, false);
+
+        var item = new GameObject(
+            "BetterUI_CraftingQuantity",
+            Il2CppType.Of<RectTransform>(),
+            Il2CppType.Of<CanvasRenderer>(),
+            Il2CppType.Of<TextMeshProUGUI>(),
+            Il2CppType.Of<LayoutElement>());
+        item.transform.SetParent(_craftingQuantityRow, false);
+        _craftingQuantity = item.GetComponent<TextMeshProUGUI>();
+        if (selected._craftCountTmp != null)
         {
-            return;
+            _craftingQuantity.font = selected._craftCountTmp.font;
+            _craftingQuantity.fontSharedMaterial = selected._craftCountTmp.fontSharedMaterial;
         }
+        BetterUIStyler.Text(_craftingQuantity, 17f, BetterUITheme.PrimaryHover, FontStyles.Bold);
+        _craftingQuantity.alignment = TextAlignmentOptions.Center;
+        _craftingQuantity.enableWordWrapping = false;
+        _craftingQuantity.overflowMode = TextOverflowModes.Overflow;
+        _craftingQuantity.margin = Vector4.zero;
+        _craftingQuantity.raycastTarget = false;
+        RectTransform rect = _craftingQuantity.rectTransform;
+        LayoutElement layout = item.GetComponent<LayoutElement>();
+        layout.ignoreLayout = true;
+        layout.minWidth = 58f;
+        layout.preferredWidth = 58f;
+        layout.flexibleWidth = 0f;
+        layout.minHeight = 30f;
+        layout.preferredHeight = 34f;
+        layout.flexibleHeight = 0f;
+        rect.anchorMin = rect.anchorMax = new Vector2(1f, .5f);
+        rect.pivot = new Vector2(1f, .5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(58f, 34f);
+        rect.localScale = Vector3.one;
+        rect.SetAsLastSibling();
+        PlaceQuantityRowBeforeRequirements();
+        if (nativeHost != null && nativeHost.GetInstanceID() != host.GetInstanceID())
+            nativeHost.gameObject.SetActive(false);
+        PositionQuantityControls(slider);
+    }
+
+    private void PlaceQuantityRowBeforeRequirements()
+    {
+        if (_craftingQuantityRow == null || _requirementsSection == null ||
+            _craftingQuantityRow.parent == null || _requirementsSection.transform.parent == null ||
+            _craftingQuantityRow.parent.GetInstanceID() != _requirementsSection.transform.parent.GetInstanceID())
+            return;
+
+        int rowIndex = _craftingQuantityRow.GetSiblingIndex();
+        int requirementsIndex = _requirementsSection.transform.GetSiblingIndex();
+        if (rowIndex == requirementsIndex - 1) return;
+        int targetIndex = rowIndex < requirementsIndex
+            ? Mathf.Max(0, requirementsIndex - 1)
+            : requirementsIndex;
+        _craftingQuantityRow.SetSiblingIndex(targetIndex);
+    }
+
+    private void PositionQuantityControls(Slider slider)
+    {
+        if (_craftingQuantityRow == null || slider == null || _craftingQuantity == null) return;
+        PlaceQuantityRowBeforeRequirements();
 
         RectTransform sliderRect = slider.GetComponent<RectTransform>();
-        if (sliderRect != null)
-        {
-            Vector2 offsetMax = sliderRect.offsetMax;
-            offsetMax.x = Mathf.Min(offsetMax.x, -58f);
-            sliderRect.offsetMax = offsetMax;
-        }
+        sliderRect.anchorMin = new Vector2(0f, .5f);
+        sliderRect.anchorMax = new Vector2(1f, .5f);
+        sliderRect.pivot = new Vector2(.5f, .5f);
+        sliderRect.offsetMin = new Vector2(0f, -9f);
+        sliderRect.offsetMax = new Vector2(-68f, 9f);
+        sliderRect.localScale = Vector3.one;
 
-        selected._craftCountTmp.alignment = TextAlignmentOptions.MidlineRight;
+        RectTransform numberRect = _craftingQuantity.rectTransform;
+        numberRect.anchorMin = numberRect.anchorMax = new Vector2(1f, .5f);
+        numberRect.pivot = new Vector2(1f, .5f);
+        numberRect.anchoredPosition = new Vector2(-2f, 0f);
+        numberRect.sizeDelta = new Vector2(54f, 34f);
+        numberRect.localScale = Vector3.one;
+    }
+
+    private void RefreshQuantityReadout(SelectedCraftingRecipeUI selected)
+    {
+        if (_craftingQuantity == null || selected == null || selected._craftCountSlider == null) return;
+        if (selected._craftCountTmp != null)
+        {
+            selected._craftCountTmp.enabled = false;
+            selected._craftCountTmp.gameObject.SetActive(false);
+        }
+        PositionQuantityControls(selected._craftCountSlider);
+        _craftingQuantity.text = Mathf.RoundToInt(selected._craftCountSlider.value).ToString();
+        _craftingQuantity.color = BetterUITheme.PrimaryHover;
     }
 
     private static void StyleRequirementMessage(TMP_Text text, Color accent, Transform workspaceRoot)

@@ -1,6 +1,6 @@
 {
   "name": "BetterUI",
-  "version_number": "0.12.2",
+  "version_number": "0.12.3",
   "website_url": "https://github.com/ohmyohmyyy/InfernoProtocol-Mods",
   "description": "Polished crafting, building, and trader menus, exact hotbar durability, and an interactive genetics tree with mouse/controller support.",
   "dependencies": [

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.3
+
+- Added restock timers.
+- Added a trader font-size slider.
+- Fixed the crafting slider not showing double digits.
+
 ## 0.12.2
 
 - Added required Interop Fix dependency.

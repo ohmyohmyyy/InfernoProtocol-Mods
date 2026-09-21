@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using Game.Data;
+using Game.LevelOperations;
 using Game.UI;
 using Game.UI.Trade;
 using Il2CppInterop.Runtime;
@@ -46,7 +49,9 @@ internal sealed class TraderMenuOverhaul
 
         UpdateRootWidth();
         ConfigureContent(trader._contentContainer);
-        float nameColumnWidth = MeasureNameColumn(trader);
+        int offerFontSize = BetterUIPlugin.TraderOfferFontSizeValue;
+        float nameColumnWidth = MeasureNameColumn(trader, offerFontSize);
+        Dictionary<int, int> restockSeconds = GetRestockSeconds(trader);
         if (trader._activeFields != null)
         {
             for (int i = 0; i < trader._activeFields.Count; i++)
@@ -55,7 +60,10 @@ internal sealed class TraderMenuOverhaul
                 if (field == null) continue;
                 int id = field.GetInstanceID();
                 if (_configuredFields.Add(id)) BuildField(field);
-                StyleField(field, nameColumnWidth);
+                int seconds = restockSeconds.TryGetValue(field._tradeIndex, out int remainingSeconds)
+                    ? remainingSeconds
+                    : -1;
+                StyleField(field, nameColumnWidth, offerFontSize, seconds);
             }
         }
 
@@ -64,6 +72,8 @@ internal sealed class TraderMenuOverhaul
         StyleFooterButton(_builder.CloseButton, ButtonVariant.Danger);
         BetterUIStyler.InputField(trader._searchInputField);
         BetterUIStyler.Scrollbars(_builder.ReplacementRoot != null ? _builder.ReplacementRoot.transform : null);
+        if (_builder.StatusLabel != null) _builder.StatusLabel.text = string.Empty;
+        if (_builder.FontSizeValue != null) _builder.FontSizeValue.text = offerFontSize.ToString();
         trader._tradeBackgroundDefaultColor = BetterUITheme.CraftingCanvas;
         trader._tradableFieldColor = BetterUITheme.CraftingReady;
         trader._untradableFieldColor = BetterUITheme.PanelElevated;
@@ -75,26 +85,68 @@ internal sealed class TraderMenuOverhaul
     {
         if (_builder.ReplacementRoot != null && _builder.ReplacementRoot.activeSelf != visible)
             _builder.ReplacementRoot.SetActive(visible);
+        if (!visible && _builder.FontSizePopover != null)
+            _builder.FontSizePopover.gameObject.SetActive(false);
     }
 
     internal bool HandleInput()
     {
-        RectTransform button = _builder.ThemeButton;
-        if (button == null || _builder.ReplacementRoot == null ||
+        RectTransform themeButton = _builder.ThemeButton;
+        RectTransform fontButton = _builder.FontSizeButton;
+        if (themeButton == null || fontButton == null || _builder.ReplacementRoot == null ||
             !_builder.ReplacementRoot.activeInHierarchy || Mouse.current == null) return false;
-        Canvas canvas = button.GetComponentInParent<Canvas>();
+        Canvas canvas = themeButton.GetComponentInParent<Canvas>();
         Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
-        bool hovered = RectTransformUtility.RectangleContainsScreenPoint(button, Mouse.current.position.ReadValue(), camera);
-        Image background = button.GetComponent<Image>();
-        if (background != null)
+        Vector2 pointer = Mouse.current.position.ReadValue();
+        bool themeHovered = RectTransformUtility.RectangleContainsScreenPoint(themeButton, pointer, camera);
+        bool fontHovered = RectTransformUtility.RectangleContainsScreenPoint(fontButton, pointer, camera);
+        StyleUtilityButton(themeButton, themeHovered);
+        StyleUtilityButton(fontButton, fontHovered);
+
+        bool changed = false;
+        if (_builder.FontSizeSlider != null)
         {
-            background.color = hovered ? BetterUITheme.SlotHover : BetterUITheme.PanelSoft;
-            Outline outline = background.GetComponent<Outline>();
-            if (outline != null) outline.effectColor = hovered ? BetterUITheme.Accent : BetterUITheme.BorderSoft;
+            int sliderValue = Mathf.Clamp(Mathf.RoundToInt(_builder.FontSizeSlider.value), 13, 24);
+            if (sliderValue != BetterUIPlugin.TraderOfferFontSizeValue)
+            {
+                BetterUIPlugin.SetTraderOfferFontSize(sliderValue);
+                changed = true;
+            }
+            if (_builder.FontSizeValue != null) _builder.FontSizeValue.text = sliderValue.ToString();
         }
-        if (!hovered || !Mouse.current.leftButton.wasPressedThisFrame) return false;
-        BetterUIPlugin.CyclePalette();
-        return true;
+
+        if (!Mouse.current.leftButton.wasPressedThisFrame) return changed;
+        if (fontHovered)
+        {
+            if (_builder.FontSizePopover != null)
+            {
+                bool show = !_builder.FontSizePopover.gameObject.activeSelf;
+                _builder.FontSizePopover.gameObject.SetActive(show);
+                if (show) _builder.FontSizePopover.SetAsLastSibling();
+            }
+            return true;
+        }
+        if (themeHovered)
+        {
+            BetterUIPlugin.CyclePalette();
+            return true;
+        }
+
+        if (_builder.FontSizePopover != null && _builder.FontSizePopover.gameObject.activeSelf &&
+            !RectTransformUtility.RectangleContainsScreenPoint(_builder.FontSizePopover, pointer, camera))
+        {
+            _builder.FontSizePopover.gameObject.SetActive(false);
+        }
+        return changed;
+    }
+
+    private static void StyleUtilityButton(RectTransform button, bool hovered)
+    {
+        Image background = button != null ? button.GetComponent<Image>() : null;
+        if (background == null) return;
+        background.color = hovered ? BetterUITheme.SlotHover : BetterUITheme.PanelSoft;
+        Outline outline = background.GetComponent<Outline>();
+        if (outline != null) outline.effectColor = hovered ? BetterUITheme.Accent : BetterUITheme.BorderSoft;
     }
 
     private static void ConfigureContent(Transform content)
@@ -195,11 +247,38 @@ internal sealed class TraderMenuOverhaul
             Normalize(field._outputContainer.GetComponent<RectTransform>());
             BuildingMenuBuilder.SetLayout(field._outputContainer.gameObject, 64f, 64f, 0f, 64f, 64f, 0f);
         }
+
+        var infoObject = new GameObject("BetterUI_TradeInfo", Il2CppType.Of<RectTransform>(),
+            Il2CppType.Of<VerticalLayoutGroup>(), Il2CppType.Of<LayoutElement>());
+        infoObject.transform.SetParent(row, false);
+        VerticalLayoutGroup infoLayout = infoObject.GetComponent<VerticalLayoutGroup>();
+        infoLayout.spacing = 0f;
+        infoLayout.childAlignment = TextAnchor.MiddleLeft;
+        infoLayout.childControlWidth = true;
+        infoLayout.childControlHeight = true;
+        infoLayout.childForceExpandWidth = true;
+        infoLayout.childForceExpandHeight = false;
+        BuildingMenuBuilder.SetLayout(infoObject, 150f, 260f, 0f, 58f, 58f, 0f);
+
         if (field._outputNameTmp != null)
         {
-            field._outputNameTmp.transform.SetParent(row, false);
+            field._outputNameTmp.transform.SetParent(infoObject.transform, false);
             Normalize(field._outputNameTmp.rectTransform);
-            BuildingMenuBuilder.SetLayout(field._outputNameTmp.gameObject, 150f, 260f, 0f, 58f, 58f, 0f);
+            BuildingMenuBuilder.SetLayout(field._outputNameTmp.gameObject, 0f, 0f, 1f, 32f, 40f, 1f);
+
+            TextMeshProUGUI restock = CloneLabel(
+                field._outputNameTmp, "BetterUI_TradeRestock", infoObject.transform);
+            if (restock != null)
+            {
+                restock.text = string.Empty;
+                restock.alignment = TextAlignmentOptions.MidlineLeft;
+                restock.enableAutoSizing = false;
+                restock.overflowMode = TextOverflowModes.Overflow;
+                restock.characterSpacing = 0.7f;
+                BetterUIStyler.Text(restock, 11f, BetterUITheme.Accent, FontStyles.Bold);
+                BuildingMenuBuilder.SetLayout(restock.gameObject, 0f, 0f, 1f, 18f, 18f, 0f);
+                restock.gameObject.SetActive(false);
+            }
         }
         if (field._tradeButton != null)
         {
@@ -222,7 +301,8 @@ internal sealed class TraderMenuOverhaul
         BuildingMenuBuilder.SetLayout(field.gameObject, 0f, 0f, 1f, 90f, 90f, 0f);
     }
 
-    private static void StyleField(TradeFieldUI field, float nameColumnWidth)
+    private static void StyleField(TradeFieldUI field, float nameColumnWidth, int offerFontSize,
+        int restockSeconds)
     {
         bool available = field.canAfford;
         Image background = field._backgroundImage;
@@ -254,29 +334,46 @@ internal sealed class TraderMenuOverhaul
 
         if (field._outputNameTmp != null)
         {
-            BetterUIStyler.Text(field._outputNameTmp, 18f,
+            BetterUIStyler.Text(field._outputNameTmp, offerFontSize,
                 available ? BetterUITheme.Text : BetterUITheme.TextUnavailable, FontStyles.Bold);
             field._outputNameTmp.enableAutoSizing = true;
-            field._outputNameTmp.fontSizeMin = 13f;
-            field._outputNameTmp.fontSizeMax = 18f;
+            field._outputNameTmp.fontSizeMin = Mathf.Min(13f, offerFontSize);
+            field._outputNameTmp.fontSizeMax = offerFontSize;
             field._outputNameTmp.alignment = TextAlignmentOptions.MidlineLeft;
             field._outputNameTmp.overflowMode = TextOverflowModes.Ellipsis;
             field._outputNameTmp.margin = new Vector4(4f, 0f, 4f, 0f);
-            BuildingMenuBuilder.SetLayout(
-                field._outputNameTmp.gameObject, nameColumnWidth, nameColumnWidth, 0f, 58f, 58f, 0f);
         }
+
+        Transform row = field.transform.Find("BetterUI_TradeRow");
+        Transform info = row != null ? row.Find("BetterUI_TradeInfo") : null;
+        if (info != null)
+            BuildingMenuBuilder.SetLayout(info.gameObject, nameColumnWidth, nameColumnWidth, 0f, 58f, 58f, 0f);
+        Transform restockTransform = info != null ? info.Find("BetterUI_TradeRestock") : null;
+        TextMeshProUGUI restock = restockTransform != null
+            ? restockTransform.GetComponent<TextMeshProUGUI>()
+            : null;
+        if (restock != null)
+        {
+            bool showRestock = restockSeconds >= 0;
+            restock.gameObject.SetActive(showRestock);
+            if (showRestock)
+            {
+                restock.text = FormatRestockTime(restockSeconds);
+                restock.color = BetterUITheme.Accent;
+            }
+        }
+
         if (field._tradeButton != null)
         {
             if (field._tradeButton.buttonText != null) field._tradeButton.buttonText.text = "TRADE";
             StyleTradeButton(field._tradeButton, available);
         }
-        Transform row = field.transform.Find("BetterUI_TradeRow");
         Transform arrow = row != null ? row.Find("BetterUI_TradeArrow") : null;
         TextMeshProUGUI arrowText = arrow != null ? arrow.GetComponent<TextMeshProUGUI>() : null;
         if (arrowText != null) arrowText.color = available ? BetterUITheme.Accent : BetterUITheme.TextDim;
     }
 
-    private static float MeasureNameColumn(TradeUI trader)
+    private static float MeasureNameColumn(TradeUI trader, int offerFontSize)
     {
         float width = 150f;
         if (trader == null || trader._activeFields == null) return width;
@@ -284,7 +381,10 @@ internal sealed class TraderMenuOverhaul
         {
             TradeFieldUI field = trader._activeFields[i];
             if (field == null || field._outputNameTmp == null || !field.gameObject.activeSelf) continue;
-            width = Mathf.Max(width, field._outputNameTmp.preferredWidth + 16f);
+            Vector2 preferred = field._outputNameTmp.GetPreferredValues(
+                field._outputNameTmp.text ?? string.Empty, 1000f, 58f);
+            float scale = offerFontSize / Mathf.Max(1f, field._outputNameTmp.fontSize);
+            width = Mathf.Max(width, (preferred.x * scale) + 16f);
         }
         return Mathf.Clamp(width, 150f, 300f);
     }
@@ -375,6 +475,11 @@ internal sealed class TraderMenuOverhaul
                 "BetterUI_TraderScroll" => BetterUITheme.CraftingWell,
                 "Viewport" => BetterUITheme.CraftingWell,
                 "BetterUI_TraderThemeButton" => BetterUITheme.PanelSoft,
+                "BetterUI_TraderFontButton" => BetterUITheme.PanelSoft,
+                "BetterUI_TraderFontPopover" => BetterUITheme.PanelElevated,
+                "BetterUI_TraderFontTrack" => BetterUITheme.PanelSoft,
+                "BetterUI_TraderFontFill" => BetterUITheme.Accent,
+                "BetterUI_TraderFontHandle" => BetterUITheme.PrimaryHover,
                 "BetterUI_TraderScrollbar" => BetterUITheme.PanelSoft,
                 "Handle" => BetterUITheme.Accent,
                 _ => null
@@ -396,8 +501,75 @@ internal sealed class TraderMenuOverhaul
             else if (label.name == "BetterUI_TraderStatus") label.color = BetterUITheme.Accent;
             else if (label.name == "BetterUI_TraderOffersHeading" || label.name == "BetterUI_TraderHint")
                 label.color = BetterUITheme.TextMuted;
+            else if (label.name == "BetterUI_TraderFontLabel") label.color = BetterUITheme.TextMuted;
+            else if (label.name == "BetterUI_TraderFontValue") label.color = BetterUITheme.Text;
         }
+        Transform fontIcon = _builder.ReplacementRoot.transform.Find(
+            "BetterUI_TraderFooter/BetterUI_TraderFontButton/BetterUI_TraderFontIcon");
+        RawImage gear = fontIcon != null ? fontIcon.GetComponent<RawImage>() : null;
+        if (gear != null) gear.color = BetterUITheme.TextMuted;
         BetterUIStyler.InputField(trader._searchInputField);
+    }
+
+    private static Dictionary<int, int> GetRestockSeconds(TradeUI trader)
+    {
+        var result = new Dictionary<int, int>();
+        try
+        {
+            float realSecondsPerDay = DayNightCycle.dayDuration;
+            if (float.IsNaN(realSecondsPerDay) || float.IsInfinity(realSecondsPerDay) ||
+                realSecondsPerDay <= 0f) return result;
+
+            TradeManager manager = TradeManager.instance;
+            TradeController controller = trader != null ? trader._currentTrader : null;
+            if (manager == null || controller == null || manager._bakedTradeControllers == null) return result;
+
+            int controllerIndex = -1;
+            for (int i = 0; i < manager._bakedTradeControllers.Count; i++)
+            {
+                TradeController candidate = manager._bakedTradeControllers[i];
+                if (candidate != null && candidate.GetInstanceID() == controller.GetInstanceID())
+                {
+                    controllerIndex = i;
+                    break;
+                }
+            }
+            if (controllerIndex < 0) return result;
+
+            TradeConfig config = controller.tradeConfig;
+            var saves = TradeManager.GetTraderStockSaves();
+            if (config == null || config.trades == null || saves == null) return result;
+
+            for (int i = 0; i < saves.Count; i++)
+            {
+                TraderStockSaveData state = saves[i];
+                if (state.controllerIndex != controllerIndex || state.tradeIndex >= config.trades.Count) continue;
+                TradeEntry trade = config.trades[state.tradeIndex];
+                if (trade == null || !trade.isStockLimited || state.remaining >= trade.maxPurchaseCount ||
+                    trade.restockIntervalHours <= 0f) continue;
+                float remaining = Mathf.Max(0f, trade.restockIntervalHours - state.restockElapsedHours);
+                result[state.tradeIndex] = Mathf.Max(1,
+                    Mathf.CeilToInt(remaining * realSecondsPerDay / 24f));
+            }
+            return result;
+        }
+        catch
+        {
+            result.Clear();
+            return result;
+        }
+    }
+
+    private static string FormatRestockTime(int totalSeconds)
+    {
+        int wholeHours = totalSeconds / 3600;
+        int minutes = totalSeconds % 3600 / 60;
+        int seconds = totalSeconds % 60;
+        return wholeHours > 0
+            ? $"RESTOCK IN // {wholeHours}H {minutes:00}M"
+            : minutes > 0
+                ? $"RESTOCK IN // {minutes}M {seconds:00}S"
+                : $"RESTOCK IN // {seconds}S";
     }
 
     private static void StyleTradeButton(MazeButton button, bool available)

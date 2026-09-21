@@ -26,6 +26,7 @@ public sealed class BetterUIPlugin : BasePlugin
     internal static ConfigEntry<bool> GeneticsEnabled { get; private set; }
     internal static ConfigEntry<bool> GeneticsReducedMotion { get; private set; }
     internal static ConfigEntry<bool> TraderEnabled { get; private set; }
+    internal static ConfigEntry<int> TraderOfferFontSize { get; private set; }
     internal static ConfigEntry<float> RefreshInterval { get; private set; }
     internal static ConfigEntry<int> ColorPalette { get; private set; }
     internal static ConfigEntry<Key> ToggleKey { get; private set; }
@@ -33,6 +34,9 @@ public sealed class BetterUIPlugin : BasePlugin
     internal static int PaletteIndex => ColorPalette != null
         ? Mathf.Clamp(ColorPalette.Value, 0, BetterUITheme.PaletteCount - 1)
         : 0;
+    internal static int TraderOfferFontSizeValue => TraderOfferFontSize != null
+        ? Mathf.Clamp(TraderOfferFontSize.Value, 13, 24)
+        : 18;
 
     public override void Load()
     {
@@ -47,6 +51,13 @@ public sealed class BetterUIPlugin : BasePlugin
             "Disables decorative DNA motion and uses immediate focus transitions in the genetics panel.");
         TraderEnabled = Config.Bind("Trader", "Enabled", true,
             "Displays the native trader inside the BetterUI exchange interface.");
+        TraderOfferFontSize = Config.Bind(
+            "Trader",
+            "OfferFontSize",
+            18,
+            new ConfigDescription(
+                "Font size used for trader offer names and their stock amounts.",
+                new AcceptableValueRange<int>(13, 24)));
         RefreshInterval = Config.Bind(
             "General",
             "RefreshInterval",
@@ -179,6 +190,12 @@ public sealed class BetterUIPlugin : BasePlugin
         ColorPalette.Value = (PaletteIndex + 1) % BetterUITheme.PaletteCount;
         string[] names = { "green", "blue", "cyan", "violet", "amber" };
         ModLog.LogInfo($"BetterUI palette changed to {names[PaletteIndex]}.");
+    }
+
+    internal static void SetTraderOfferFontSize(float value)
+    {
+        if (TraderOfferFontSize == null) return;
+        TraderOfferFontSize.Value = Mathf.Clamp(Mathf.RoundToInt(value), 13, 24);
     }
 
     private static float Sanitize(float value, float fallback, float minimum, float maximum)

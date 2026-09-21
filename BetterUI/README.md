@@ -1,4 +1,4 @@
-# BetterUI 0.12.2
+# BetterUI 0.12.3
 
 Polished crafting, building, and trader menus plus a compact genetics tree for Inferno Protocol. This mod changes presentation only, not crafting costs/times, construction rules, trade data, gene acquisition, gene stages or effects.
 
@@ -25,7 +25,7 @@ The hammer's building catalog now uses the same BetterUI language: a category ra
 
 ## Trading
 
-The trader now opens in a compact BetterUI exchange with searchable offers, clear available and unavailable states, aligned costs and rewards, and the shared palette controls. Native inventory, affordability, stock, filtering, and trade callbacks remain authoritative.
+The trader now opens in a compact BetterUI exchange with searchable offers, clear available and unavailable states, aligned costs and rewards, and the shared palette controls. Its footer gear opens a compact offer-text size slider, and every partially depleted offer shows its own authoritative countdown converted to real-world time. Native inventory, affordability, stock, filtering, and trade callbacks remain authoritative.
 
 ## Installation
 

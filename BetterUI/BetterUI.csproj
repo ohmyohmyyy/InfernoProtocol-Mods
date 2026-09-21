@@ -7,9 +7,9 @@
     <AssemblyName>InfernoProtocol.BetterUI</AssemblyName>
     <RootNamespace>InfernoProtocol.BetterUI</RootNamespace>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>0.12.2</Version>
-    <FileVersion>0.12.2.0</FileVersion>
-    <AssemblyVersion>0.12.2.0</AssemblyVersion>
+    <Version>0.12.3</Version>
+    <FileVersion>0.12.3.0</FileVersion>
+    <AssemblyVersion>0.12.3.0</AssemblyVersion>
     <Deterministic>true</Deterministic>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <DebugType>portable</DebugType>
@@ -32,6 +32,7 @@
     <Reference Include="UnityEngine.TextRenderingModule" HintPath="$(InteropDir)\UnityEngine.TextRenderingModule.dll" Private="false" />
     <Reference Include="UnityEngine.UI" HintPath="$(InteropDir)\UnityEngine.UI.dll" Private="false" />
     <Reference Include="UnityEngine.UIModule" HintPath="$(InteropDir)\UnityEngine.UIModule.dll" Private="false" />
+    <Reference Include="Unity.Netcode.Runtime" HintPath="$(InteropDir)\Unity.Netcode.Runtime.dll" Private="false" />
     <Reference Include="Unity.TextMeshPro" HintPath="$(InteropDir)\Unity.TextMeshPro.dll" Private="false" />
   </ItemGroup>
 </Project>

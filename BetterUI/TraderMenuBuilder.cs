@@ -20,6 +20,11 @@ internal sealed class TraderMenuBuilder
 
     internal GameObject ReplacementRoot { get; private set; }
     internal RectTransform ThemeButton { get; private set; }
+    internal RectTransform FontSizeButton { get; private set; }
+    internal RectTransform FontSizePopover { get; private set; }
+    internal Slider FontSizeSlider { get; private set; }
+    internal TextMeshProUGUI FontSizeValue { get; private set; }
+    internal TextMeshProUGUI StatusLabel { get; private set; }
     internal MazeButton CloseButton { get; private set; }
 
     internal void Build(TradeUI trader)
@@ -83,7 +88,7 @@ internal sealed class TraderMenuBuilder
             $"content={(trader._contentContainer != null ? "yes" : "no")}).");
     }
 
-    private static void BuildHeader(RectTransform root, TextMeshProUGUI template)
+    private void BuildHeader(RectTransform root, TextMeshProUGUI template)
     {
         RectTransform header = CreateSurface("BetterUI_TraderHeader", root, BetterUITheme.Panel);
         AnchorTop(header, 84f, 0f, 0f);
@@ -98,14 +103,15 @@ internal sealed class TraderMenuBuilder
         title.rectTransform.offsetMax = Vector2.zero;
 
         TextMeshProUGUI status = CreateLabel("BetterUI_TraderStatus", header, template);
-        status.text = "LIVE INVENTORY  //  SECURE EXCHANGE\nSTOCK UPDATES AUTOMATICALLY";
-        BetterUIStyler.Text(status, 11f, BetterUITheme.Accent, FontStyles.Bold);
+        status.text = string.Empty;
+        BetterUIStyler.Text(status, 14f, BetterUITheme.Accent, FontStyles.Bold);
         status.characterSpacing = 1.15f;
         status.alignment = TextAlignmentOptions.MidlineRight;
         status.rectTransform.anchorMin = new Vector2(.58f, 0f);
         status.rectTransform.anchorMax = Vector2.one;
         status.rectTransform.offsetMin = Vector2.zero;
         status.rectTransform.offsetMax = new Vector2(-20f, -4f);
+        StatusLabel = status;
     }
 
     private static void BuildOffers(TradeUI trader, RectTransform root, TextMeshProUGUI template)
@@ -221,6 +227,21 @@ internal sealed class TraderMenuBuilder
         iconRect.anchoredPosition = Vector2.zero;
         iconRect.sizeDelta = new Vector2(25f, 25f);
 
+        FontSizeButton = CreateSurface("BetterUI_TraderFontButton", footer, BetterUITheme.PanelSoft);
+        FontSizeButton.GetComponent<Image>().raycastTarget = true;
+        BuildingMenuBuilder.SetLayout(FontSizeButton.gameObject, 42f, 46f, 0f, 38f, 38f, 0f);
+        var gearObject = new GameObject("BetterUI_TraderFontIcon", Il2CppType.Of<RectTransform>(),
+            Il2CppType.Of<CanvasRenderer>(), Il2CppType.Of<RawImage>());
+        gearObject.transform.SetParent(FontSizeButton, false);
+        RawImage gear = gearObject.GetComponent<RawImage>();
+        gear.texture = BetterUITheme.GearTexture;
+        gear.color = BetterUITheme.TextMuted;
+        gear.raycastTarget = false;
+        RectTransform gearRect = gearObject.GetComponent<RectTransform>();
+        gearRect.anchorMin = gearRect.anchorMax = gearRect.pivot = new Vector2(.5f, .5f);
+        gearRect.anchoredPosition = Vector2.zero;
+        gearRect.sizeDelta = new Vector2(24f, 24f);
+
         if (trader._hideUntradableButton != null)
         {
             MoveToLayout(trader._hideUntradableButton.transform, footer, 42f, 46f, 0f, 38f);
@@ -231,6 +252,93 @@ internal sealed class TraderMenuBuilder
             if (CloseButton.buttonText != null) CloseButton.buttonText.text = "[ ESC ]  CLOSE";
             MoveToLayout(CloseButton.transform, footer, 130f, 150f, 0f, 38f);
         }
+
+        BuildFontSizePopover(root, template);
+    }
+
+    private void BuildFontSizePopover(RectTransform root, TextMeshProUGUI template)
+    {
+        FontSizePopover = CreateSurface("BetterUI_TraderFontPopover", root, BetterUITheme.PanelElevated, true);
+        FontSizePopover.anchorMin = FontSizePopover.anchorMax = new Vector2(1f, 0f);
+        FontSizePopover.pivot = new Vector2(1f, 0f);
+        FontSizePopover.anchoredPosition = new Vector2(-178f, 58f);
+        FontSizePopover.sizeDelta = new Vector2(246f, 54f);
+        FontSizePopover.GetComponent<Image>().raycastTarget = true;
+        HorizontalLayoutGroup layout = FontSizePopover.gameObject.AddComponent<HorizontalLayoutGroup>();
+        layout.padding = Padding(10, 10, 8, 8);
+        layout.spacing = 8f;
+        layout.childAlignment = TextAnchor.MiddleCenter;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = false;
+        layout.childForceExpandHeight = false;
+
+        TextMeshProUGUI label = CreateLabel("BetterUI_TraderFontLabel", FontSizePopover, template);
+        label.text = "OFFER TEXT";
+        BetterUIStyler.Text(label, 11f, BetterUITheme.TextMuted, FontStyles.Bold);
+        label.characterSpacing = .7f;
+        label.alignment = TextAlignmentOptions.MidlineLeft;
+        BuildingMenuBuilder.SetLayout(label.gameObject, 68f, 68f, 0f, 30f, 30f, 0f);
+
+        FontSizeSlider = CreateFontSizeSlider(FontSizePopover);
+
+        FontSizeValue = CreateLabel("BetterUI_TraderFontValue", FontSizePopover, template);
+        FontSizeValue.text = BetterUIPlugin.TraderOfferFontSizeValue.ToString();
+        BetterUIStyler.Text(FontSizeValue, 13f, BetterUITheme.Text, FontStyles.Bold);
+        FontSizeValue.alignment = TextAlignmentOptions.Center;
+        BuildingMenuBuilder.SetLayout(FontSizeValue.gameObject, 28f, 28f, 0f, 30f, 30f, 0f);
+        FontSizePopover.gameObject.SetActive(false);
+        FontSizePopover.SetAsLastSibling();
+    }
+
+    private static Slider CreateFontSizeSlider(RectTransform parent)
+    {
+        var sliderObject = new GameObject("BetterUI_TraderFontSlider", Il2CppType.Of<RectTransform>(),
+            Il2CppType.Of<Slider>(), Il2CppType.Of<LayoutElement>());
+        sliderObject.transform.SetParent(parent, false);
+        BuildingMenuBuilder.SetLayout(sliderObject, 102f, 102f, 0f, 30f, 30f, 0f);
+        RectTransform sliderRect = sliderObject.GetComponent<RectTransform>();
+        Normalize(sliderRect);
+
+        RectTransform track = CreateSurface("BetterUI_TraderFontTrack", sliderRect, BetterUITheme.PanelSoft);
+        track.anchorMin = new Vector2(0f, .5f); track.anchorMax = new Vector2(1f, .5f);
+        track.offsetMin = new Vector2(6f, -3f); track.offsetMax = new Vector2(-6f, 3f);
+        track.GetComponent<Image>().raycastTarget = true;
+
+        RectTransform fillArea = CreateRect("Fill Area", sliderRect);
+        fillArea.anchorMin = new Vector2(0f, .5f); fillArea.anchorMax = new Vector2(1f, .5f);
+        fillArea.offsetMin = new Vector2(6f, -3f); fillArea.offsetMax = new Vector2(-6f, 3f);
+        RectTransform fill = CreateSurface("BetterUI_TraderFontFill", fillArea, BetterUITheme.Accent);
+        fill.anchorMin = Vector2.zero; fill.anchorMax = Vector2.one;
+        fill.offsetMin = Vector2.zero; fill.offsetMax = Vector2.zero;
+        fill.GetComponent<Image>().raycastTarget = false;
+
+        RectTransform handleArea = CreateRect("Handle Slide Area", sliderRect);
+        handleArea.anchorMin = Vector2.zero; handleArea.anchorMax = Vector2.one;
+        handleArea.offsetMin = new Vector2(7f, 0f); handleArea.offsetMax = new Vector2(-7f, 0f);
+        RectTransform handle = CreateSurface("BetterUI_TraderFontHandle", handleArea, BetterUITheme.PrimaryHover);
+        handle.anchorMin = handle.anchorMax = new Vector2(0f, .5f);
+        handle.pivot = new Vector2(.5f, .5f);
+        handle.sizeDelta = new Vector2(14f, 22f);
+        handle.GetComponent<Image>().raycastTarget = true;
+
+        Slider slider = sliderObject.GetComponent<Slider>();
+        slider.minValue = 13f;
+        slider.maxValue = 24f;
+        slider.wholeNumbers = true;
+        slider.value = BetterUIPlugin.TraderOfferFontSizeValue;
+        slider.fillRect = fill;
+        slider.handleRect = handle;
+        slider.targetGraphic = handle.GetComponent<Image>();
+        slider.direction = Slider.Direction.LeftToRight;
+        return slider;
+    }
+
+    private static RectTransform CreateRect(string name, Transform parent)
+    {
+        var item = new GameObject(name, Il2CppType.Of<RectTransform>());
+        item.transform.SetParent(parent, false);
+        return item.GetComponent<RectTransform>();
     }
 
     private static TextMeshProUGUI FindTextTemplate(TradeUI trader)
